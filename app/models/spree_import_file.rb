@@ -1,3 +1,5 @@
-class SpreeImportFile < SpreeImport
-  belongs_to :user, class: 'Spree::User'
+module Spree
+  class ImportFile < Import
+    belongs_to :import
+  end
 end
