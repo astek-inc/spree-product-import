@@ -1,0 +1,23 @@
+<%= form_for( [:admin, @product_import], html: {multipart: true} )do |f| %>
+  <% if @product_import.errors.any? %>
+    <div id="error_explanation">
+      <h2><%= pluralize(@product_import.errors.count, "error") %> prohibited this product_import from being saved:</h2>
+
+      <ul>
+      <% @product_import.errors.full_messages.each do |message| %>
+        <li><%= message %></li>
+      <% end %>
+      </ul>
+    </div>
+  <% end %>
+
+  <%= f.fields_for :file do |file| %>
+    <%= file.file_field :csv_file %>
+  <% end %>
+
+
+
+  <div class="actions">
+    <%= f.submit %>
+  </div>
+<% end %>

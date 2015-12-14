@@ -1,2 +1,0 @@
-class SpreeproductimportController < ApplicationController
-end

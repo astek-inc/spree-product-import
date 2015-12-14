@@ -1,3 +1,12 @@
 Spree::Core::Engine.routes.draw do
-  # Add your extension routes here
+
+
+  Spree::Core::Engine.routes.draw do
+    namespace :admin do
+      resources :product_imports do
+        post :import, on: :member
+      end
+    end
+  end
+
 end

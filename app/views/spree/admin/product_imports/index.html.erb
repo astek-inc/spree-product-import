@@ -1,0 +1,25 @@
+<p id="notice"><%= notice %></p>
+
+<h1>Listing Product Imports</h1>
+
+<table>
+  <thead>
+    <tr>
+      <th colspan="3"></th>
+    </tr>
+  </thead>
+
+  <tbody>
+    <% @product_imports.each do |product_import| %>
+      <tr>
+        <td><%= link_to 'Show', [:admin, product_import] %></td>
+        <td><%= link_to 'Edit', edit_admin_product_import_path(product_import) %></td>
+        <td><%= link_to 'Destroy', [:admin, product_import], method: :delete, data: { confirm: 'Are you sure?' } %></td>
+      </tr>
+    <% end %>
+  </tbody>
+</table>
+
+<br>
+
+<%= link_to 'New Product import', new_admin_product_import_path %>

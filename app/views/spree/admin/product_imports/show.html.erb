@@ -1,0 +1,22 @@
+<p id="notice"><%= notice %></p>
+<h1>Review Products to be imported</h1>
+<table>
+  <thead></thead>
+    <% @headers.each do |key|%>
+    <th><%= key %></th>
+    <% end %>
+  </thead>
+
+<% @csv.each do |row| %>
+  <tr>
+    <% row.each do |cell| %>
+      <td><%= cell[1]  %></td>
+    <% end %>
+  </tr>
+<% end %>
+</table>
+
+<%= button_to 'Import', import_admin_product_import_path(@product_import) %>
+
+<%= link_to 'Edit', edit_admin_product_import_path(@product_import) %> |
+<%= link_to 'Back', admin_product_imports_path %>
