@@ -1,6 +1,6 @@
 <p id="notice"><%= notice %></p>
 <h1>Review Products to be imported</h1>
-<table>
+<table id="results">
   <thead></thead>
     <% @headers.each do |key|%>
     <th><%= key %></th>
@@ -16,7 +16,7 @@
 <% end %>
 </table>
 
-<%= button_to 'Import', import_admin_product_import_path(@product_import) %>
+<%= button_to 'Import', import_admin_product_import_path(@product_import), remote: true %>
 
 <%= link_to 'Edit', edit_admin_product_import_path(@product_import) %> |
 <%= link_to 'Back', admin_product_imports_path %>

@@ -1,5 +1,5 @@
 module Spree::Admin
-  class ProductImportsController < ApplicationController
+  class ProductImportsController < ResourceController
     before_action :set_product_import, only: [:show, :edit, :update, :destroy, :import]
 
     # GET /product_imports
@@ -37,12 +37,13 @@ module Spree::Admin
     end
 
     def import
-      @product_import.import
-      respond_to  do |format|
-        [:admin, @product_import]
-      end
+      @products = @product_import.import
+      respond_to :js
     end
 
+    # TODO implement export functionality
+    def export
+    end
 
     # PATCH/PUT /product_imports/1
     def update
