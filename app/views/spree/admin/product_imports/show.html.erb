@@ -1,22 +1,50 @@
-<p id="notice"><%= notice %></p>
-<h1>Review Products to be imported</h1>
-<table id="results">
-  <thead></thead>
-    <% @headers.each do |key|%>
-    <th><%= key %></th>
-    <% end %>
-  </thead>
-
-<% @csv.each do |row| %>
-  <tr>
-    <% row.each do |cell| %>
-      <td><%= cell[1]  %></td>
-    <% end %>
-  </tr>
+<% content_for :page_title do %>
+    <%= Spree.t(:review) + ' ' + Spree.t(:product_import) %>
 <% end %>
-</table>
 
-<%= button_to 'Import', import_admin_product_import_path(@product_import), remote: true %>
+<div id="results"></div>
 
-<%= link_to 'Edit', edit_admin_product_import_path(@product_import) %> |
-<%= link_to 'Back', admin_product_imports_path %>
+<div id="product-import-data-wrapper">
+  <table class="table" id='product_import_data' data-hook>
+    <thead>
+      <th class="id"><%= Spree.t(:id) %></th>
+      <th class="product_id"><%= Spree.t(:product_id) %></th>
+      <th class="sku"><%= Spree.t(:sku) %></th>
+      <th class="state"><%= Spree.t(:state) %></th>
+      <th class="name"><%= Spree.t(:name) %></th>
+      <th class="primary_category"><%= Spree.t(:primary_category) %></th>
+      <th class="brand"><%= Spree.t(:brand) %></th>
+      <th class="collection"><%= Spree.t(:collection) %></th>
+    </thead>
+
+    <tbody>
+      <% @item_display_data.each do |item| %>
+          <tr data-product-import-id="<%= item['id'] %>">
+            <td class="id"><%= item['id'] %></td>
+            <td class="product_id"><%= item['product_id'] %></td>
+            <td class="sku"><%= item['sku'] %></td>
+            <td class="state"><span class="label label-<%= item['state_label'] %>"><%= item['state'] %></span></td>
+            <td class="name"><%= item['name'] %></td>
+            <td class="primary_category"><%= item['primary_category'] %></td>
+            <td class="brand"><%= item['brand'] %></td>
+            <td class="collection"><%= item['collection'] %></td>
+          </tr>
+      <% end %>
+    </tbody>
+  </table>
+</div>
+
+<div class="form-actions" data-hook="buttons">
+  <% unless @product_import.state == 'complete' %>
+    <%= button_to import_admin_product_import_path(@product_import), { class: 'btn btn-success', remote: true , form: { 'style' => 'display:inline;' } } do %>
+        <%= content_tag(:span, '', class: "icon icon-ok") %> <%= Spree.t('import') %>
+    <% end %>
+    <span class="or"><%= Spree.t(:or) %></span>
+  <% end %>
+  <% if @product_import.state == 'complete' %>
+    <%= button_link_to Spree.t('actions.back'), admin_product_imports_url, :icon => 'remove' %>
+  <% else %>
+      <%= button_link_to Spree.t('actions.cancel'), admin_product_imports_url, :icon => 'remove' %>
+  <% end %>
+</div>
+

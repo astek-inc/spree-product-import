@@ -1,23 +1,9 @@
-<%= form_for( [:admin, @product_import], html: {multipart: true} )do |f| %>
-  <% if @product_import.errors.any? %>
-    <div id="error_explanation">
-      <h2><%= pluralize(@product_import.errors.count, "error") %> prohibited this product_import from being saved:</h2>
-
-      <ul>
-      <% @product_import.errors.full_messages.each do |message| %>
-        <li><%= message %></li>
-      <% end %>
-      </ul>
-    </div>
+  <%= f.field_container :name, class: ['form-group'] do %>
+    <%= f.label :name, Spree.t(:name) %> <span class="required">*</span>
+    <%= f.text_field :name, :required => true, :class => 'form-control' %>
   <% end %>
 
-  <%= f.fields_for :file do |file| %>
-    <%= file.file_field :csv_file %>
+  <%= f.field_container :csv_file, class: ['form-group'] do %>
+    <%= f.label :csv_file, Spree.t(:csv_file) %> <span class="required">*</span>
+    <%= f.file_field :csv_file, :required => true, :class => 'form-control' %>
   <% end %>
-
-
-
-  <div class="actions">
-    <%= f.submit %>
-  </div>
-<% end %>

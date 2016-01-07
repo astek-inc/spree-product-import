@@ -1,5 +1,10 @@
-# Sample localization file for English. Add more files in this directory for other locales.
-# See https://github.com/svenfuchs/rails-i18n/tree/master/rails%2Flocale for starting points.
-
 en:
-  hello: "Hello world"
+  spree:
+    product_import: 'Product Import'
+    product_imports: 'Product Imports'
+    import: 'Import'
+    id: 'ID'
+    product_id: 'Product ID'
+    brand: 'Brand'
+    collection: 'Collection'
+    primary_category: 'Primary Category'

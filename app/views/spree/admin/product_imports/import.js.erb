@@ -1,3 +1,12 @@
-<% if @products %>
-$('#results').html("<%= @products %>");
+<% if @product_import_items %>
+  <% @product_import_items.each do |item| %>
+    $('#product_import_data tr[data-product-import-id="<%= item.id %>"] td.product_id').html(<%= item.product_id %>);
+    $('#product_import_data tr[data-product-import-id="<%= item.id %>"] td.state span').html('imported').removeClass('label-warning').addClass('label-success');
+  <% end %>
+
+  <% if @product_import.state == 'complete' %>
+    $('div[data-hook="buttons"] form.button_to').hide();
+    $('div[data-hook="buttons"] span.or').hide();
+    $('div[data-hook="buttons"] a.btn-default').html('<span class="icon icon-remove"></span> Back');
+  <% end %>
 <% end %>

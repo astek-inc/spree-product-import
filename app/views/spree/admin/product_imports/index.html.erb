@@ -1,25 +1,45 @@
-<p id="notice"><%= notice %></p>
+<% content_for :page_title do %>
+    <%= Spree.t(:product_imports) %>
+<% end %>
 
-<h1>Listing Product Imports</h1>
+<% content_for :page_actions do %>
+    <%= button_link_to Spree.t(:new) + ' ' + Spree.t(:product_import), new_object_url, { :class => "btn-success", :icon => 'add', 'data-update' => 'new_product_import', :id => 'new_product_import_link' } %>
+<% end %>
 
-<table>
-  <thead>
-    <tr>
-      <th colspan="3"></th>
-    </tr>
-  </thead>
+<% if @product_imports.any? %>
+    <table class="table" id='product_imports' data-hook>
+      <thead>
+        <tr data-hook="product_imports_header">
+          <th class="name"><%= Spree.t(:name) %></th>
+          <th class="state"><%= Spree.t(:state) %></th>
+          <th class="created_at"><%= Spree.t(:created_at) %></th>
+          <th class="completed_at"><%= Spree.t(:completed_at) %></th>
+          <th class="actions"></th>
+        </tr>
+      </thead>
 
-  <tbody>
-    <% @product_imports.each do |product_import| %>
-      <tr>
-        <td><%= link_to 'Show', [:admin, product_import] %></td>
-        <td><%= link_to 'Edit', edit_admin_product_import_path(product_import) %></td>
-        <td><%= link_to 'Destroy', [:admin, product_import], method: :delete, data: { confirm: 'Are you sure?' } %></td>
-      </tr>
-    <% end %>
-  </tbody>
-</table>
-
-<br>
-
-<%= link_to 'New Product import', new_admin_product_import_path %>
+      <tbody>
+        <% @product_imports.each do |import| %>
+          <tr>
+            <td class="name"><%= import.name %></td>
+            <td class="state"><span class="label label-<%= import.state_label %>"><%= import.state %></span></td>
+            <td class="created_at"><%= import.created_at.to_date %></td>
+            <td class="completed_at"><%= import.completed_at.to_date unless import.completed_at.nil? %></td>
+            <td class="actions actions-2 text-right">
+              <%#= link_to 'Show', [:admin, import] %>
+              <%= link_to_with_icon('eye-open', nil, admin_product_import_url(import), {:name => 'View', :no_text => true, :class => 'btn btn-primary btn-sm'}) %>
+              <%# if import.state == 'pending' %>
+                <%= link_to_edit(import, :no_text => true) %>
+                <%= link_to_delete(import, :no_text => true) %>
+              <%# end %>
+            </td>
+          </tr>
+        <% end %>
+      </tbody>
+    </table>
+<% else %>
+    <div class="alert alert-info no-objects-found">
+      <%= Spree.t(:no_resource_found, resource: plural_resource_name(Spree::ProductImport)) %>,
+      <%= link_to Spree.t(:add_one), new_object_url %>!
+    </div>
+<% end %>
