@@ -9,6 +9,8 @@ module Spree
     has_attached_file :csv_file
     validates_attachment :csv_file, content_type: { content_type: ['text/plain', 'text/csv'] }
 
+    mattr_accessor :image_url_base
+
     # def initialize *args
     #   super
     #   @products ||= Array.new
@@ -34,6 +36,10 @@ module Spree
     # def build_product(attrs)
     #   #Spree::Product.where(id: attrs[:id]).first_or_create(attrs)
     # end
+
+    def self.setup
+      yield self
+    end
 
   end
 end

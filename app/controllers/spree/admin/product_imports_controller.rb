@@ -1,6 +1,8 @@
 module Spree::Admin
   class ProductImportsController < ResourceController
 
+    SAMPLE_VARIANT_PRICE = 5.99
+
     require 'csv'
     require 'open-uri'
     require 'json'
@@ -22,6 +24,11 @@ module Spree::Admin
 
     private
 
+    def permitted_resource_params
+      params.require(:product_import).permit( :name, :csv_file )
+    end
+
+    # Set value for import state labels
     def set_import_state_labels
       @product_imports.each do |import|
         case import.state
@@ -80,10 +87,6 @@ module Spree::Admin
       return out
     end
 
-    def permitted_resource_params
-      params.require(:product_import).permit( :name, :csv_file )
-    end
-
     # Create a product from import data
     def create_product_from_import_item(item)
       item_data = JSON.parse(item.json)
@@ -107,8 +110,9 @@ module Spree::Admin
       create_sample_options product
       assign_category product, item_data
       assign_branding product, item_data
-      # # assign_properties product, item
-      # # upload_images product, item
+      assign_properties product, item_data
+      assign_order_information product, item_data
+      process_image product
 
       item.product_id = product.id
       item.state = 'imported'
@@ -131,7 +135,7 @@ module Spree::Admin
         when 'full'
           price = product.price
         when 'sample'
-          price = 5.99
+          price = SAMPLE_VARIANT_PRICE
       end
 
       variant = Spree::Variant.create!(
@@ -168,14 +172,32 @@ module Spree::Admin
 
       # Find category taxon by name. If it doesn't exist, create it.
       # Append it to the item's taxons.
-      taxon = Spree::Taxon.where(name: item_data['type'], taxonomy_id: categories_base.taxonomy_id).first
-      if taxon.nil?
-        taxon = Spree::Taxon.create(name: item_data['type'], taxonomy_id: categories_base.taxonomy_id)
-        categories_base.children << taxon
-      end
+      taxon_name = get_category_taxon_name(item_data['type'])
+      taxon = Spree::Taxon.where(name: taxon_name, taxonomy_id: categories_base.taxonomy_id).first_or_create!
+      categories_base.children << taxon
 
       product.taxons << taxon
       product.save!
+    end
+
+    # Get the taxon name corresponding to the value in the "type"
+    # column of the spreadsheet.
+    def get_category_taxon_name(type_from_spreadsheet)
+      case type_from_spreadsheet
+        when 'Wallcovering'
+          taxon_name = 'Wall Coverings'
+        when 'Naturals Fiber Wallcovering'
+          taxon_name = 'Grasscloth and Naturals'
+        when 'Mural'
+          taxon_name = 'Wall Murals'
+        when 'Border'
+          taxon_name = 'Borders'
+        when 'Decal'
+          taxon_name = 'Wall Decals'
+        else
+          taxon_name = type_from_spreadsheet
+      end
+      return taxon_name
     end
 
     # Assign a brand to the product.
@@ -200,49 +222,62 @@ module Spree::Admin
     # Assign properties.
     def assign_properties(product, item_data)
 
-      # if item_data['washability'] == 'Washable'
-      #   property = Spree::Property.find_by_name('washable')
-      #   Spree::ProductProperty.create(property: property, item: product, value: 'Washable')
+      unless item_data['roll_width'].nil?
+        product.set_property('roll width', item_data['roll_width'])
+      end
+
+      unless item_data['roll_length_yds'].nil?
+        product.set_property('roll length', item_data['roll_length_yds'])
+      end
+
+      unless item_data['repeat_height'].nil? || item_data['repeat_height'].to_f.zero?
+        product.set_property('repeat height', item_data['repeat_height'])
+      else
+        product.set_property('repeat height', 'None')
+      end
+
+      # unless item_data['repeat_width'].nil? || item_data['repeat_width'].to_f.zero?
+      #   product.set_property('repeat width', item_data['repeat_width'])
       # end
-      #
-      # if item_data['removability'] == 'Strippable'
-      #   property = Spree::Property.find_by_name('strippable')
-      #   Spree::ProductProperty.create(property: property, item: product, value: 'Strippable')
-      # end
-      #
-      # if item_data['pre-pasted'] == 'Yes'
-      #   property = Spree::Property.find_by_name('pre-pasted')
-      #   Spree::ProductProperty.create(property: property, item: product, value: 'Pre Pasted')
-      # end
+
+      unless item_data['match_type'].nil?
+        product.set_property('repeat match type', item_data['match_type'])
+      end
+
+      unless item_data['washability'].nil?
+        product.set_property('washability', item_data['washability'])
+      end
+
+      unless item_data['removability'].nil?
+        product.set_property('removability', item_data['removability'])
+      end
+
+      unless item_data['prepasted'].nil?
+        product.set_property('pre-pasted', item_data['prepasted'])
+      end
 
     end
 
-    def upload_images(product, item_data)
-      # Upload images
-      item['images'].each_with_index do |image, i|
-        if /png|jpeg|jpg|gif/i =~ image['url']
+    # Assign "Ordering Information" items.
+    def assign_order_information(product, item_data)
+      case item_data['type']
+        when 'Wallpaper'
+          order_info_item = Spree::OrderInfoItem.where(name: 'Colors may vary - please order sample')
+      end
+      product.order_info_items << order_info_item
+    end
 
-          begin
-            @img = open(URI.encode(image['url']))
-            status = @img.status[0]
-          rescue OpenURI::HTTPError => error
-            # @errors << "product# #{p.id} error: #{error.io.status[0]}"
-          end
+    # Process associated product image.
+    def process_image(product)
+      url_base = Spree::ProductImport.image_url_base
+      %w[jpg jpeg png gif].each do |extension|
+        image_url = url_base + '/' + product.sku + '.' + extension
+        img = open(URI.encode(image_url))
+        status = img.status[0]
 
-          if status.to_i == 200
-            begin
-              Spree::Image.create attachment: @img, viewable: p.master
-            rescue Paperclip::Error => error
-              # @errors << "product# #{p.id} error: #{error}"
-              #
-              # # The main image failed so delete the product.
-              # if i == 0
-              #   @errors << "Failed on main image, Product# #{p.id} destroyed."
-              #   return p.destroy
-              # end
-
-            end
-          end
+        if status.to_i == 200
+          Spree::Image.create attachment: img, viewable: product.master
+          break
         end
       end
     end
