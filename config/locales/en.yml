@@ -8,3 +8,5 @@ en:
     brand: 'Brand'
     collection: 'Collection'
     primary_category: 'Primary Category'
+    secondary_category: 'Secondary Category'
+    publish_state: 'Publish State'

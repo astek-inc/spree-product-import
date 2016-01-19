@@ -1,6 +1,15 @@
 module Spree::Admin
   class ProductImportsController < ResourceController
 
+    IMPORT_ITEM_STATE_PENDING = 'pending'
+    IMPORT_ITEM_STATE_IMPORTED = 'imported'
+
+    IMPORT_ITEM_PUBLISH_STATE_PENDING = 'pending'
+    IMPORT_ITEM_PUBLISH_STATE_PUBLISHED = 'published'
+
+    IMPORT_STATE_PENDING = 'pending'
+    IMPORT_STATE_COMPLETE = 'complete'
+
     SAMPLE_VARIANT_PRICE = 5.99
 
     require 'csv'
@@ -10,12 +19,13 @@ module Spree::Admin
     before_action :set_import_state_labels, only: [:index]
     # before_action :set_csv, only: [:show, :import]
     before_action :set_item_display_data, only: [:show]
+    before_action :destroy_products, only: [:destroy]
     after_action :create_items, only: [:create]
 
     def import
-      @product_import_items = Spree::ProductImportItem.where(product_import_id: @product_import.id, state: 'pending').map { |item| create_product_from_import_item item }
-      if Spree::ProductImportItem.where(product_import_id: @product_import.id, state: 'pending').empty?
-        @product_import.state = 'complete'
+      @product_import_items = Spree::ProductImportItem.where(product_import_id: @product_import.id, state: IMPORT_ITEM_STATE_PENDING).map { |item| create_product_from_import_item item }
+      if Spree::ProductImportItem.where(product_import_id: @product_import.id, state: IMPORT_ITEM_STATE_PENDING).empty?
+        @product_import.state = IMPORT_STATE_COMPLETE
         @product_import.completed_at = DateTime.now
         @product_import.save!
       end
@@ -32,9 +42,9 @@ module Spree::Admin
     def set_import_state_labels
       @product_imports.each do |import|
         case import.state
-          when 'pending'
+          when IMPORT_STATE_PENDING
             import.state_label = 'warning'
-          when 'complete'
+          when IMPORT_STATE_COMPLETE
             import.state_label = 'success'
         end
       end
@@ -46,16 +56,25 @@ module Spree::Admin
       @headers = @csv.first.keys
     end
 
+    # Destroy any imported products when destroying import
+    def destroy_products
+      Spree::ProductImportItem.where(product_import_id: @product_import.id).each do |item|
+        unless item.product_id.nil?
+          Spree::Product.destroy(item.product_id)
+        end
+      end
+    end
+
     # Create product import items for each row of the csv file
     def create_items
       set_csv
       @csv.each do |csv_item|
         Spree::ProductImportItem.create!(
-            {
-                product_import_id: @product_import.id,
-                sku: csv_item[:sku],
-                json: csv_item.to_json
-            }
+          {
+            product_import_id: @product_import.id,
+            sku: csv_item[:sku],
+            json: csv_item.to_json
+          }
         )
       end
     end
@@ -69,22 +88,37 @@ module Spree::Admin
     def set_display_data(item)
       data = JSON.parse(item.json)
       out = {
-          'id' => item.id,
-          'product_id' => item.product_id,
-          'sku' => item.sku,
-          'state' => item.state,
-          'name' => data['item_name'],
-          'brand' => data['brand'],
-          'collection' => data['main_category'],
-          'primary_category' => data['type'],
-          'publish_status' => data['publish_status']
+        'id' => item.id,
+        'product_id' => item.product_id,
+        'sku' => item.sku,
+        'state' => item.state,
+        'name' => data['item_name'],
+        'brand' => data['brand'],
+        'collection' => data['main_category'],
+        'primary_category' => data['type']
       }
+
       case item.state
-        when 'pending'
+        when IMPORT_ITEM_STATE_PENDING
           out['state_label'] = 'warning'
-        when 'imported'
+        when IMPORT_ITEM_STATE_IMPORTED
           out['state_label'] = 'success'
       end
+
+      if item.product_id.nil?
+        published = nil
+      else
+        published = Spree::Product.find(item.product_id).available_on
+      end
+
+      if published
+        out['publish_state'] = IMPORT_ITEM_PUBLISH_STATE_PUBLISHED
+        out['publish_state_label'] = 'success'
+      else
+        out['publish_state'] = IMPORT_ITEM_PUBLISH_STATE_PENDING
+        out['publish_state_label'] = 'warning'
+      end
+
       return out
     end
 
@@ -92,19 +126,19 @@ module Spree::Admin
     def create_product_from_import_item(item)
       item_data = JSON.parse(item.json)
       product = Spree::Product.create(
-          {
-            sku: item.sku,
-            name: item_data['item_name'],
-            available_on: item_data['publish_status'].to_i == 1 ? Time.now : nil,
-            description: item_data['brief_description'],
-            price: item_data['price'],
-            tax_category: Spree::TaxCategory.find_by_name('Taxable'),
-            shipping_category: Spree::ShippingCategory.first,
-            weight: item_data['weight'],
-            height: item_data['pkg_height'],
-            width: item_data['pkg_width'],
-            depth: item_data['pkg_length']
-          }
+        {
+          sku: item.sku,
+          name: item_data['item_name'],
+          available_on: item_data['publish_status'].to_i == 1 ? Time.now : nil,
+          description: item_data['brief_description'],
+          price: item_data['price'],
+          tax_category: Spree::TaxCategory.find_by_name('Taxable'),
+          shipping_category: Spree::ShippingCategory.first,
+          weight: item_data['weight'],
+          height: item_data['pkg_height'],
+          width: item_data['pkg_width'],
+          depth: item_data['pkg_length']
+        }
       )
 
       generate_slug product
@@ -116,7 +150,7 @@ module Spree::Admin
       process_image product
 
       item.product_id = product.id
-      item.state = 'imported'
+      item.state = IMPORT_ITEM_STATE_IMPORTED
       item.save!
       return item
     end
@@ -140,15 +174,15 @@ module Spree::Admin
       end
 
       variant = Spree::Variant.create!(
-          {
-            product: product,
-            sku: "#{product.sku}_#{product.id}_#{type}",
-            price: price,
-            weight: product.weight,
-            height: product.height,
-            width: product.width,
-            depth: product.depth
-          }
+        {
+          product: product,
+          sku: "#{product.sku}_#{product.id}_#{type}",
+          price: price,
+          weight: product.weight,
+          height: product.height,
+          width: product.width,
+          depth: product.depth
+        }
       )
 
       option_type = Spree::OptionType.where(name: 'item_or_sample', presentation: 'Product').first_or_create

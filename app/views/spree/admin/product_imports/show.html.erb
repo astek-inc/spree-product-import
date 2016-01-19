@@ -13,23 +13,32 @@
       <th class="state"><%= Spree.t(:state) %></th>
       <th class="name"><%= Spree.t(:name) %></th>
       <th class="primary_category"><%= Spree.t(:primary_category) %></th>
+      <th class="secondary_category"><%= Spree.t(:secondary_category) %></th>
       <th class="brand"><%= Spree.t(:brand) %></th>
       <th class="collection"><%= Spree.t(:collection) %></th>
-      <th class="publish_status">Publish Status</th>
+      <th class="publish_state"><%= Spree.t(:publish_state) %></th>
+      <th class="actions"></th>
     </thead>
 
     <tbody>
       <% @item_display_data.each do |item| %>
           <tr data-product-import-id="<%= item['id'] %>">
             <td class="id"><%= item['id'] %></td>
-            <td class="product_id"><% unless item['product_id'].nil? %><%= link_to(item['product_id'], edit_admin_product_path(item['product_id'])) %><% end %></td>
+            <td class="product_id"><% unless item['product_id'].nil? %><%= item['product_id'] %><% end %></td>
             <td class="sku"><%= item['sku'] %></td>
             <td class="state"><span class="label label-<%= item['state_label'] %>"><%= item['state'] %></span></td>
             <td class="name"><%= item['name'] %></td>
             <td class="primary_category"><%= item['primary_category'] %></td>
+            <td class="secondaryary_category">Test</td>
             <td class="brand"><%= item['brand'] %></td>
             <td class="collection"><%= item['collection'] %></td>
-            <td class="publish_status"><% if item['publish_status'].to_i == 0 %><span style="color: red;">✘</span><% else %><span style="color: green;">✔</span><% end %></td>
+            <td class="publish_state"><span class="label label-<%= item['publish_state_label'] %>"><%= item['publish_state'] %></span></td>
+            <td>
+              <% unless item['product_id'].nil? %>
+                <%= link_to_with_icon('eye-open', nil, product_url(item['product_id']), { :name => 'View', :no_text => true, :class => 'btn btn-primary btn-sm', :target => '_blank' }) %>
+                <%= link_to_edit_url(edit_admin_product_url(item['product_id']), { :no_text => true, :target => '_blank' }) %>
+              <% end %>
+            </td>
           </tr>
       <% end %>
     </tbody>
