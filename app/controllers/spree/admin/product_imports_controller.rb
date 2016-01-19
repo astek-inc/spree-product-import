@@ -76,7 +76,8 @@ module Spree::Admin
           'name' => data['item_name'],
           'brand' => data['brand'],
           'collection' => data['main_category'],
-          'primary_category' => data['type']
+          'primary_category' => data['type'],
+          'publish_status' => data['publish_status']
       }
       case item.state
         when 'pending'
@@ -94,7 +95,7 @@ module Spree::Admin
           {
             sku: item.sku,
             name: item_data['item_name'],
-            available_on: Time.now,
+            available_on: item_data['publish_status'].to_i == 1 ? Time.now : nil,
             description: item_data['brief_description'],
             price: item_data['price'],
             tax_category: Spree::TaxCategory.find_by_name('Taxable'),

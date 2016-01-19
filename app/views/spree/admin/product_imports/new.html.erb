@@ -4,7 +4,7 @@
     <%= Spree.t(:new) + ' ' + Spree.t(:product_import) %>
 <% end %>
 
-<%#= render 'form' %>
+<%= Spree::ProductImport.image_url_base %>
 
 <%= form_for( [:admin, @product_import], html: { multipart: true } )do |f| %>
     <fieldset data-hook="new_product_import">
