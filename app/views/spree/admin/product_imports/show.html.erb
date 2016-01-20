@@ -13,7 +13,7 @@
       <th class="state"><%= Spree.t(:state) %></th>
       <th class="name"><%= Spree.t(:name) %></th>
       <th class="primary_category"><%= Spree.t(:primary_category) %></th>
-      <th class="secondary_category"><%= Spree.t(:secondary_category) %></th>
+      <!--<th class="secondary_category"><%#= Spree.t(:secondary_category) %></th>-->
       <th class="brand"><%= Spree.t(:brand) %></th>
       <th class="collection"><%= Spree.t(:collection) %></th>
       <th class="publish_state"><%= Spree.t(:publish_state) %></th>
@@ -29,11 +29,11 @@
             <td class="state"><span class="label label-<%= item['state_label'] %>"><%= item['state'] %></span></td>
             <td class="name"><%= item['name'] %></td>
             <td class="primary_category"><%= item['primary_category'] %></td>
-            <td class="secondaryary_category">Test</td>
+            <!--<td class="secondary_category"><%#= item['secondary_category'] %></td>-->
             <td class="brand"><%= item['brand'] %></td>
             <td class="collection"><%= item['collection'] %></td>
             <td class="publish_state"><span class="label label-<%= item['publish_state_label'] %>"><%= item['publish_state'] %></span></td>
-            <td>
+            <td class="actions">
               <% unless item['product_id'].nil? %>
                 <%= link_to_with_icon('eye-open', nil, product_url(item['product_id']), { :name => 'View', :no_text => true, :class => 'btn btn-primary btn-sm', :target => '_blank' }) %>
                 <%= link_to_edit_url(edit_admin_product_url(item['product_id']), { :no_text => true, :target => '_blank' }) %>

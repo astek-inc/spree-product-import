@@ -95,7 +95,8 @@ module Spree::Admin
         'name' => data['item_name'],
         'brand' => data['brand'],
         'collection' => data['main_category'],
-        'primary_category' => data['type']
+        'primary_category' => data['type'],
+        # 'secondary_category' => data['secondary_category'].present? ? data['secondary_category'] : nil
       }
 
       case item.state
@@ -143,7 +144,7 @@ module Spree::Admin
 
       generate_slug product
       create_sample_options product
-      assign_category product, item_data
+      assign_categories product, item_data
       assign_branding product, item_data
       assign_properties product, item_data
       assign_order_information product, item_data
@@ -151,6 +152,7 @@ module Spree::Admin
 
       item.product_id = product.id
       item.state = IMPORT_ITEM_STATE_IMPORTED
+      item.publish_state = product.available_on.nil? ? IMPORT_ITEM_PUBLISH_STATE_PENDING : IMPORT_ITEM_PUBLISH_STATE_PUBLISHED
       item.save!
       return item
     end
@@ -201,8 +203,9 @@ module Spree::Admin
       product.save!
     end
 
-    # Attach a primary category to the product
-    def assign_category(product, item_data)
+    # Attach category taxons to the product
+    def assign_categories(product, item_data)
+      categories_taxonomy = Spree::Taxonomy.find_by(name: 'Categories')
       categories_base = Spree::Taxon.find_by_name('Categories')
 
       # Find category taxon by name. If it doesn't exist, create it.
@@ -210,8 +213,15 @@ module Spree::Admin
       taxon_name = get_category_taxon_name(item_data['type'])
       taxon = Spree::Taxon.where(name: taxon_name, taxonomy_id: categories_base.taxonomy_id).first_or_create!
       categories_base.children << taxon
-
       product.taxons << taxon
+
+      # # Now get the secondary category taxon (if one is provided), or create it if it doesn't exist
+      # if item_data['secondary_category'].present? && !item_data['secondary_category'].nil?
+      #   child_taxon = Spree::Taxon.where(name: item_data['secondary_category'], parent: taxon, taxonomy: categories_taxonomy).first_or_create!
+      #   taxon.children << child_taxon
+      #   product.taxons << child_taxon
+      # end
+
       product.save!
     end
 

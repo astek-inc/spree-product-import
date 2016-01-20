@@ -2,6 +2,8 @@
   <% @product_import_items.each do |item| %>
     $('#product_import_data tr[data-product-import-id="<%= item.id %>"] td.product_id').html(<%= item.product_id %>);
     $('#product_import_data tr[data-product-import-id="<%= item.id %>"] td.state span').html('imported').removeClass('label-warning').addClass('label-success');
+    $('#product_import_data tr[data-product-import-id="<%= item.id %>"] td.publish_state span').html('<%= item.publish_state %>')<% if item.publish_state == 'published' %>.removeClass('label-warning').addClass('label-success')<% end %>;
+    $('#product_import_data tr[data-product-import-id="<%= item.id %>"] td.actions').html('<%= link_to_with_icon('eye-open', nil, product_url(item.product_id), { :name => 'View', :no_text => true, :class => 'btn btn-primary btn-sm', :target => '_blank' }) %> <%= link_to_edit_url(edit_admin_product_url(item.product_id), { :no_text => true, :target => '_blank' }) %>');
   <% end %>
 
   <% if @product_import.state == 'complete' %>

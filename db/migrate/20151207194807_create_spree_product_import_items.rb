@@ -6,6 +6,7 @@ class CreateSpreeProductImportItems < ActiveRecord::Migration
       t.string :sku
       t.text :json
       t.string :state, default: 'pending'
+      t.string :publish_state, default: 'pending'
       t.datetime :imported_at
       t.timestamps null: false
     end
