@@ -12,6 +12,8 @@ module Spree::Admin
     IMPORT_STATE_PENDING = 'pending'
     IMPORT_STATE_COMPLETE = 'complete'
 
+    IMAGE_URL_BASE = 'https://s3-us-west-2.amazonaws.com/dyw-product-upload/images'
+
     SAMPLE_VARIANT_PRICE = 5.99
 
     require 'csv'
@@ -25,7 +27,6 @@ module Spree::Admin
     after_action :create_items, only: [:create]
 
     def import
-
       response.headers['Content-Type'] = 'text/event-stream'
       Spree::ProductImportItem.where(product_import_id: @product_import.id, state: IMPORT_ITEM_STATE_PENDING).each do |item|
         item = create_product_from_import_item(item)
@@ -46,16 +47,6 @@ module Spree::Admin
         # client disconnected.
       ensure
         response.stream.close
-
-      # @product_import_items = Spree::ProductImportItem.where(product_import_id: @product_import.id, state: IMPORT_ITEM_STATE_PENDING).map { |item| create_product_from_import_item item }
-      # if Spree::ProductImportItem.where(product_import_id: @product_import.id, state: IMPORT_ITEM_STATE_PENDING).empty?
-      #   @product_import.state = IMPORT_STATE_COMPLETE
-      #   @product_import.completed_at = DateTime.now
-      #   @product_import.save!
-      # end
-      # respond_to :js
-      #
-
     end
 
     private
@@ -341,9 +332,10 @@ module Spree::Admin
 
     # Process associated product image.
     def process_image(product)
-      url_base = 'https://s3-us-west-2.amazonaws.com/dyw-product-upload/images' #Spree::ProductImport.image_url_base
+      # url_base = Spree::ProductImport.image_url_base
+      
       %w[jpg jpeg png gif].each do |extension|
-        image_url = url_base + '/' + product.sku + '.' + extension
+        image_url = IMAGE_URL_BASE + '/' + product.sku + '.' + extension
         img = open(URI.encode(image_url))
         status = img.status[0]
 
