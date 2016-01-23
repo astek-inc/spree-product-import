@@ -1,6 +1,8 @@
 module Spree::Admin
   class ProductImportsController < ResourceController
 
+    include ActionController::Live
+
     IMPORT_ITEM_STATE_PENDING = 'pending'
     IMPORT_ITEM_STATE_IMPORTED = 'imported'
 
@@ -23,13 +25,37 @@ module Spree::Admin
     after_action :create_items, only: [:create]
 
     def import
-      @product_import_items = Spree::ProductImportItem.where(product_import_id: @product_import.id, state: IMPORT_ITEM_STATE_PENDING).map { |item| create_product_from_import_item item }
+
+      response.headers['Content-Type'] = 'text/event-stream'
+      Spree::ProductImportItem.where(product_import_id: @product_import.id, state: IMPORT_ITEM_STATE_PENDING).each do |item|
+        item = create_product_from_import_item(item)
+        response.stream.write 'event: update'+$/
+        response.stream.write 'data: '+item.to_json+$/+$/
+      end
+
       if Spree::ProductImportItem.where(product_import_id: @product_import.id, state: IMPORT_ITEM_STATE_PENDING).empty?
         @product_import.state = IMPORT_STATE_COMPLETE
         @product_import.completed_at = DateTime.now
         @product_import.save!
       end
-      respond_to :js
+
+      response.stream.write 'event: update'+$/
+      response.stream.write 'data: END:'+@product_import.state+$/+$/
+
+      rescue IOError
+        # client disconnected.
+      ensure
+        response.stream.close
+
+      # @product_import_items = Spree::ProductImportItem.where(product_import_id: @product_import.id, state: IMPORT_ITEM_STATE_PENDING).map { |item| create_product_from_import_item item }
+      # if Spree::ProductImportItem.where(product_import_id: @product_import.id, state: IMPORT_ITEM_STATE_PENDING).empty?
+      #   @product_import.state = IMPORT_STATE_COMPLETE
+      #   @product_import.completed_at = DateTime.now
+      #   @product_import.save!
+      # end
+      # respond_to :js
+      #
+
     end
 
     private
@@ -152,6 +178,7 @@ module Spree::Admin
 
       item.product_id = product.id
       item.state = IMPORT_ITEM_STATE_IMPORTED
+      item.imported_at = DateTime.now
       item.publish_state = product.available_on.nil? ? IMPORT_ITEM_PUBLISH_STATE_PENDING : IMPORT_ITEM_PUBLISH_STATE_PUBLISHED
       item.save!
       return item
@@ -314,7 +341,7 @@ module Spree::Admin
 
     # Process associated product image.
     def process_image(product)
-      url_base = Spree::ProductImport.image_url_base
+      url_base = 'https://s3-us-west-2.amazonaws.com/dyw-product-upload/images' #Spree::ProductImport.image_url_base
       %w[jpg jpeg png gif].each do |extension|
         image_url = url_base + '/' + product.sku + '.' + extension
         img = open(URI.encode(image_url))

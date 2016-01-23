@@ -4,6 +4,49 @@
 
 <div id="results"></div>
 
+<script type="text/javascript">
+  function update_row(item) {
+    $('#product_import_data tr[data-product-import-id="'+item.id+'"] td.product_id').html(item.product_id);
+    $('#product_import_data tr[data-product-import-id="'+item.id+'"] td.state span').html('imported').removeClass('label-warning').addClass('label-success');
+    $('#product_import_data tr[data-product-import-id="'+item.id+'"] td.publish_state span').html(item.publish_state);
+    if (item.publish_state == 'published') {
+      $('#product_import_data tr[data-product-import-id="'+item.id+'"] td.publish_state span').removeClass('label-warning').addClass('label-success');
+    }
+    $('#product_import_data tr[data-product-import-id="'+item.id+'"] td.actions').html('<a name="View" class="btn btn-primary btn-sm icon-link with-tip action-eye-open no-text" target="_blank" href="/products/'+item.product_id+'"><span class="icon icon-eye-open"></span> </a> <a target="_blank" data-action="edit" class="btn btn-primary btn-sm icon-link with-tip action-edit no-text" title="Edit" href="/admin/products/'+item.product_id+'/edit"><span class="icon icon-edit"></span> </a>');
+  }
+
+  function import_products(product_import_id) {
+    var source = new EventSource(product_import_id+'/import');
+    source.addEventListener('update', function(e){
+
+      // console.log(e.data);
+
+      if (e.data.match(/^END/)) {
+        source.close();
+        import_status = e.data.split(':')[1]
+        if (import_status == 'complete') {
+          $('#btn-import').hide();
+          $('div[data-hook="buttons"] span.or').hide();
+          $('div[data-hook="buttons"] a.btn-default').html('<span class="icon icon-remove"></span> Back');
+        }
+        return;
+      }
+
+      item = JSON.parse(e.data);
+      update_row(item)
+
+    });
+  }
+
+  $(function(){
+    $('#btn-import').click(function(event){
+      event.preventDefault();
+      import_products(<%= @product_import.id %>);
+    });
+  });
+</script>
+
+
 <div id="product-import-data-wrapper">
   <table class="table" id='product_import_data' data-hook>
     <thead>
@@ -47,9 +90,11 @@
 
 <div class="form-actions" data-hook="buttons">
   <% unless @product_import.state == 'complete' %>
-    <%= button_to import_admin_product_import_path(@product_import), { class: 'btn btn-success', remote: true , form: { 'style' => 'display:inline;' } } do %>
-        <%= content_tag(:span, '', class: "icon icon-ok") %> <%= Spree.t('import') %>
-    <% end %>
+    <%#= button_to import_admin_product_import_path(@product_import), { class: 'btn btn-success', remote: true , form: { 'style' => 'display:inline;' } } do %>
+        <%#= content_tag(:span, '', class: "icon icon-ok") %> <%#= Spree.t('import') %>
+    <%# end %>
+    <%= button_link_to Spree.t('import'), '', { icon: 'ok', class: 'btn btn-success', id: 'btn-import' } %>
+
     <span class="or"><%= Spree.t(:or) %></span>
   <% end %>
   <% if @product_import.state == 'complete' %>

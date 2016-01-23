@@ -28,10 +28,10 @@
             <td class="actions actions-2 text-right">
               <%#= link_to 'Show', [:admin, import] %>
               <%= link_to_with_icon('eye-open', nil, admin_product_import_url(import), {:name => 'View', :no_text => true, :class => 'btn btn-primary btn-sm'}) %>
-              <%# if import.state == 'pending' %>
+              <% if import.state == 'pending' %>
                 <%= link_to_edit(import, :no_text => true) %>
-                <%= link_to_delete(import, :no_text => true) %>
-              <%# end %>
+              <% end %>
+              <%= link_to_delete(import, :no_text => true) %>
             </td>
           </tr>
         <% end %>
