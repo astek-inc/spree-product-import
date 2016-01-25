@@ -155,7 +155,8 @@ module Spree::Admin
           weight: item_data['weight'],
           height: item_data['pkg_height'],
           width: item_data['pkg_width'],
-          depth: item_data['pkg_length']
+          depth: item_data['pkg_length'],
+          sale_unit: set_sale_unit(item_data)
         }
       )
 
@@ -213,6 +214,16 @@ module Spree::Admin
           variant.option_values << Spree::OptionValue.where(name: 'Sample', presentation: 'Sample', option_type: option_type).first_or_create
       end
       variant.save!
+    end
+
+    # Set sale unit, if it's possible to derive it from the information available
+    def set_sale_unit(item_data)
+      case item_data['type']
+        when 'Wallpaper'
+          if item_data['default_qnty'].to_i == 2
+            return Spree::SaleUnit.find_by(name: 'Single roll')
+          end
+      end
     end
 
     # Generate product slug
@@ -319,15 +330,27 @@ module Spree::Admin
         product.set_property('pre-pasted', item_data['prepasted'])
       end
 
+      case item_data['type']
+        when 'Wallpaper'
+          if item_data['default_qnty'].to_i == 2
+            product.set_property('sold by', 'Single roll')
+            product.set_property('count by', 2)
+          end
+      end
+
     end
 
     # Assign "Ordering Information" items.
     def assign_order_information(product, item_data)
       case item_data['type']
         when 'Wallpaper'
-          order_info_item = Spree::OrderInfoItem.where(name: 'Colors may vary - please order sample')
+          product.order_info_items << Spree::OrderInfoItem.where(name: 'Colors may vary - please order sample').take
+
+          if item_data['default_qnty'].to_i == 2
+            product.order_info_items << Spree::OrderInfoItem.where(name: 'Double roll').take
+          end
       end
-      product.order_info_items << order_info_item
+      #product.order_info_items << order_info_item
     end
 
     # Process associated product image.
