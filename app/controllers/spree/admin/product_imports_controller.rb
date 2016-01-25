@@ -333,7 +333,7 @@ module Spree::Admin
     # Process associated product image.
     def process_image(product)
       # url_base = Spree::ProductImport.image_url_base
-      
+
       %w[jpg jpeg png gif].each do |extension|
         image_url = IMAGE_URL_BASE + '/' + product.sku + '.' + extension
         img = open(URI.encode(image_url))
