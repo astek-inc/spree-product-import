@@ -2,8 +2,6 @@
     <%= Spree.t(:review) + ' ' + Spree.t(:product_import) %>
 <% end %>
 
-<div id="results"></div>
-
 <script type="text/javascript">
   function update_row(item) {
     $('#product_import_data tr[data-product-import-id="'+item.id+'"] td.product_id').html(item.product_id);
@@ -40,7 +38,6 @@
     });
   });
 </script>
-
 
 <div id="product-import-data-wrapper">
   <table class="table" id='product_import_data' data-hook>
