@@ -5,6 +5,7 @@ module Spree::Admin
 
     IMPORT_ITEM_STATE_PENDING = 'pending'
     IMPORT_ITEM_STATE_IMPORTED = 'imported'
+    IMPORT_ITEM_STATE_ERROR = 'error'
 
     IMPORT_ITEM_PUBLISH_STATE_PENDING = 'pending'
     IMPORT_ITEM_PUBLISH_STATE_PUBLISHED = 'published'
@@ -28,13 +29,13 @@ module Spree::Admin
 
     def import
       response.headers['Content-Type'] = 'text/event-stream'
-      Spree::ProductImportItem.where(product_import_id: @product_import.id, state: IMPORT_ITEM_STATE_PENDING).each do |item|
+      Spree::ProductImportItem.where(product_import_id: @product_import.id, state: [IMPORT_ITEM_STATE_PENDING, IMPORT_ITEM_STATE_ERROR]).each do |item|
         item = create_product_from_import_item(item)
         response.stream.write 'event: update'+$/
         response.stream.write 'data: '+item.to_json+$/+$/
       end
 
-      if Spree::ProductImportItem.where(product_import_id: @product_import.id, state: IMPORT_ITEM_STATE_PENDING).empty?
+      if Spree::ProductImportItem.where(product_import_id: @product_import.id, state: [IMPORT_ITEM_STATE_PENDING, IMPORT_ITEM_STATE_ERROR]).empty?
         @product_import.state = IMPORT_STATE_COMPLETE
         @product_import.completed_at = DateTime.now
         @product_import.save!
@@ -121,6 +122,8 @@ module Spree::Admin
           out['state_label'] = 'warning'
         when IMPORT_ITEM_STATE_IMPORTED
           out['state_label'] = 'success'
+        when IMPORT_ITEM_STATE_ERROR
+          out['state_label'] = 'error'
       end
 
       if item.product_id.nil?
@@ -142,38 +145,54 @@ module Spree::Admin
 
     # Create a product from import data
     def create_product_from_import_item(item)
-      item_data = JSON.parse(item.json)
-      product = Spree::Product.create(
-        {
-          sku: item.sku,
-          name: item_data['item_name'],
-          available_on: item_data['publish_status'].to_i == 1 ? Time.now : nil,
-          description: item_data['brief_description'],
-          price: item_data['price'],
-          tax_category: Spree::TaxCategory.find_by_name('Taxable'),
-          shipping_category: Spree::ShippingCategory.first,
-          weight: item_data['weight'],
-          height: item_data['pkg_height'],
-          width: item_data['pkg_width'],
-          depth: item_data['pkg_length'],
-          sale_unit: set_sale_unit(item_data)
-        }
-      )
 
-      generate_slug product
-      create_sample_options product
-      assign_categories product, item_data
-      assign_branding product, item_data
-      assign_properties product, item_data
-      assign_order_information product, item_data
-      process_image product
+      begin
 
-      item.product_id = product.id
-      item.state = IMPORT_ITEM_STATE_IMPORTED
-      item.imported_at = DateTime.now
-      item.publish_state = product.available_on.nil? ? IMPORT_ITEM_PUBLISH_STATE_PENDING : IMPORT_ITEM_PUBLISH_STATE_PUBLISHED
-      item.save!
+        item_data = JSON.parse(item.json)
+        product = Spree::Product.create(
+          {
+            sku: item.sku,
+            name: item_data['item_name'],
+            available_on: item_data['publish_status'].to_i == 1 ? Time.now : nil,
+            description: item_data['brief_description'],
+            price: item_data['price'],
+            tax_category: Spree::TaxCategory.find_by_name('Taxable'),
+            shipping_category: Spree::ShippingCategory.first,
+            weight: item_data['weight'],
+            height: item_data['pkg_height'],
+            width: item_data['pkg_width'],
+            depth: item_data['pkg_length'],
+            sale_unit: set_sale_unit(item_data)
+          }
+        )
+
+        generate_slug product
+        create_sample_options product
+        assign_categories product, item_data
+        assign_branding product, item_data
+        assign_properties product, item_data
+        assign_order_information product, item_data
+        process_images product
+
+        item.product_id = product.id
+        item.state = IMPORT_ITEM_STATE_IMPORTED
+        item.imported_at = DateTime.now
+        item.publish_state = product.available_on.nil? ? IMPORT_ITEM_PUBLISH_STATE_PENDING : IMPORT_ITEM_PUBLISH_STATE_PUBLISHED
+        item.save!
+
+      rescue
+
+        product.destroy
+        item.product_id = nil
+        item.state = IMPORT_ITEM_STATE_ERROR
+        item.imported_at = nil
+        item.publish_state = IMPORT_ITEM_PUBLISH_STATE_PENDING
+        item.save!
+
+      end
+
       return item
+
     end
 
     # Create product options for sample.
@@ -350,22 +369,35 @@ module Spree::Admin
             product.order_info_items << Spree::OrderInfoItem.where(name: 'Double roll').take
           end
       end
-      #product.order_info_items << order_info_item
     end
 
-    # Process associated product image.
-    def process_image(product)
+    # Process associated product images.
+    def process_images(product)
+
+      image_count = 0
       # url_base = Spree::ProductImport.image_url_base
 
-      %w[jpg jpeg png gif].each do |extension|
-        image_url = IMAGE_URL_BASE + '/' + product.sku + '.' + extension
-        img = open(URI.encode(image_url))
-        status = img.status[0]
+      ['', '-ROOM'].each do |image_type|
+        %w[jpg jpeg png gif].each do |extension|
 
-        if status.to_i == 200
-          Spree::Image.create attachment: img, viewable: product.master
-          break
+          begin
+            image_url = IMAGE_URL_BASE + '/' + product.sku + image_type + '.' + extension
+            img = open(URI.encode(image_url))
+            status = img.status[0]
+            if status.to_i == 200
+              Spree::Image.create attachment: img, viewable: product.master
+              image_count += 1
+              break
+            end
+          rescue OpenURI::HTTPError => error
+            # Do nothing here -- we could have many errors as we look for an image to open.
+          end
         end
+      end
+
+      # Raise an exception if no images were successfully processed.
+      unless image_count > 0
+        raise
       end
     end
 

@@ -3,9 +3,26 @@
 <% end %>
 
 <script type="text/javascript">
+  function labelClassForState(state) {
+    switch (state) {
+      case 'pending':
+        labelClass = 'label-warning';
+        break;
+
+      case 'imported':
+        labelClass = 'label-success';
+        break;
+
+      case 'error':
+        labelClass = 'label-error';
+        break;
+    }
+    return labelClass;
+  }
+
   function update_row(item) {
     $('#product_import_data tr[data-product-import-id="'+item.id+'"] td.product_id').html(item.product_id);
-    $('#product_import_data tr[data-product-import-id="'+item.id+'"] td.state span').html('imported').removeClass('label-warning').addClass('label-success');
+    $('#product_import_data tr[data-product-import-id="'+item.id+'"] td.state span').html(item.state).removeClass('label-warning label-error').addClass(labelClassForState(item.state));
     $('#product_import_data tr[data-product-import-id="'+item.id+'"] td.publish_state span').html(item.publish_state);
     if (item.publish_state == 'published') {
       $('#product_import_data tr[data-product-import-id="'+item.id+'"] td.publish_state span').removeClass('label-warning').addClass('label-success');
