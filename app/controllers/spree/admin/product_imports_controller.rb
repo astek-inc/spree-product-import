@@ -375,13 +375,13 @@ module Spree::Admin
     # Process associated product images. Get image from catalog site, attach to product.
     def process_images(product)
 
-      server = 'ftpimages.brewsterhomefashions.com'
-      user = 'dealers'
-      password = 'Brewster#1'
+      # server = 'ftpimages.brewsterhomefashions.com'
+      # user = 'dealers'
+      # password = 'Brewster#1'
 
-      # server = BREWSTER_FTP_SERVER
-      # user = BREWSTER_FTP_USERNAME
-      # password = BREWSTER_FTP_PASSWORD
+      server = Spree::ProductImport.brewster_ftp_server
+      user = Spree::ProductImport.brewster_ftp_username
+      password = Spree::ProductImport.brewster_ftp_password
 
       paths = {'/WallpaperBooks/Layla/Images/72dpi/Patterns' => '', '/WallpaperBooks/Layla/Images/72dpi/Rooms' => '_Room'}
 
@@ -404,7 +404,7 @@ module Spree::Admin
 
           image_count += 1
 
-          # Can't get this to work - Paperclip throws an error
+          # Can't get this to work -- Paperclip throws an error
           # img_data = ftp.getbinaryfile(filename, nil)
           # data_uri = 'data:image/jpeg;base64,'+img_data
           # img = Paperclip.io_adapters.for(data_uri)
@@ -416,6 +416,7 @@ module Spree::Admin
         # puts '=============================='
         # puts e
         # puts '=============================='
+
         # Do nothing here -- not all products have every type of image.
       end
 
@@ -424,29 +425,6 @@ module Spree::Admin
         raise
       end
 
-      # image_count = 0
-      # # url_base = Spree::ProductImport.image_url_base
-      #
-      # ['', '-ROOM'].each do |image_type|
-      #   %w[jpg jpeg png gif].each do |extension|
-      #
-      #     begin
-      #       image_url = IMAGE_URL_BASE + '/' + product.sku + image_type + '.' + extension
-      #       img = open(URI.encode(image_url))
-      #       status = img.status[0]
-      #       if status.to_i == 200
-      #         Spree::Image.create attachment: img, viewable: product.master
-      #         image_count += 1
-      #         break
-      #       end
-      #     rescue OpenURI::HTTPError => error
-      #       # Do nothing here -- we could have many errors as we look for an image to open.
-      #     end
-      #   end
-      # end
-      #
-
     end
-
   end
 end

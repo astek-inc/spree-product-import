@@ -9,7 +9,9 @@ module Spree
     has_attached_file :csv_file
     validates_attachment :csv_file, content_type: { content_type: ['text/plain', 'text/csv'] }
 
-    mattr_accessor :image_url_base
+    mattr_accessor :brewster_ftp_server
+    mattr_accessor :brewster_ftp_username
+    mattr_accessor :brewster_ftp_password
 
     # def initialize *args
     #   super
