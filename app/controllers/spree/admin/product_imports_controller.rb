@@ -20,6 +20,7 @@ module Spree::Admin
     require 'csv'
     require 'open-uri'
     require 'json'
+    require 'net/ftp'
 
     before_action :set_import_state_labels, only: [:index]
     # before_action :set_csv, only: [:show, :import]
@@ -371,34 +372,80 @@ module Spree::Admin
       end
     end
 
-    # Process associated product images.
+    # Process associated product images. Get image from catalog site, attach to product.
     def process_images(product)
 
-      image_count = 0
-      # url_base = Spree::ProductImport.image_url_base
+      server = 'ftpimages.brewsterhomefashions.com'
+      user = 'dealers'
+      password = 'Brewster#1'
 
-      ['', '-ROOM'].each do |image_type|
-        %w[jpg jpeg png gif].each do |extension|
+      # server = BREWSTER_FTP_SERVER
+      # user = BREWSTER_FTP_USERNAME
+      # password = BREWSTER_FTP_PASSWORD
 
-          begin
-            image_url = IMAGE_URL_BASE + '/' + product.sku + image_type + '.' + extension
-            img = open(URI.encode(image_url))
-            status = img.status[0]
-            if status.to_i == 200
-              Spree::Image.create attachment: img, viewable: product.master
-              image_count += 1
-              break
-            end
-          rescue OpenURI::HTTPError => error
-            # Do nothing here -- we could have many errors as we look for an image to open.
-          end
+      paths = {'/WallpaperBooks/Layla/Images/72dpi/Patterns' => '', '/WallpaperBooks/Layla/Images/72dpi/Rooms' => '_Room'}
+
+      begin
+        ftp = Net::FTP.new(server)
+        ftp.passive = true
+        ftp.login user, password
+
+        image_count = 0
+
+        paths.each do |path, filename_suffix|
+          ftp.chdir(path)
+          filename = product.sku+filename_suffix+'.jpg'
+
+          img = File.new(filename, 'wb')
+          img_data = ftp.getbinaryfile(filename, nil)
+          img.write(img_data)
+          Spree::Image.create attachment: img, viewable: product.master
+          File.delete(img.path)
+
+          image_count += 1
+
+          # Can't get this to work - Paperclip throws an error
+          # img_data = ftp.getbinaryfile(filename, nil)
+          # data_uri = 'data:image/jpeg;base64,'+img_data
+          # img = Paperclip.io_adapters.for(data_uri)
+          # img.original_filename = filename
+          # Spree::Image.create attachment: img, viewable: product.master
         end
+
+      rescue StandardError => e
+        # puts '=============================='
+        # puts e
+        # puts '=============================='
+        # Do nothing here -- not all products have every type of image.
       end
 
       # Raise an exception if no images were successfully processed.
       unless image_count > 0
         raise
       end
+
+      # image_count = 0
+      # # url_base = Spree::ProductImport.image_url_base
+      #
+      # ['', '-ROOM'].each do |image_type|
+      #   %w[jpg jpeg png gif].each do |extension|
+      #
+      #     begin
+      #       image_url = IMAGE_URL_BASE + '/' + product.sku + image_type + '.' + extension
+      #       img = open(URI.encode(image_url))
+      #       status = img.status[0]
+      #       if status.to_i == 200
+      #         Spree::Image.create attachment: img, viewable: product.master
+      #         image_count += 1
+      #         break
+      #       end
+      #     rescue OpenURI::HTTPError => error
+      #       # Do nothing here -- we could have many errors as we look for an image to open.
+      #     end
+      #   end
+      # end
+      #
+
     end
 
   end
