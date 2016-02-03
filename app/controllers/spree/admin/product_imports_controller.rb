@@ -3,18 +3,6 @@ module Spree::Admin
 
     include ActionController::Live
 
-    IMPORT_ITEM_STATE_PENDING = 'pending'
-    IMPORT_ITEM_STATE_IMPORTED = 'imported'
-    IMPORT_ITEM_STATE_ERROR = 'error'
-
-    IMPORT_ITEM_PUBLISH_STATE_PENDING = 'pending'
-    IMPORT_ITEM_PUBLISH_STATE_PUBLISHED = 'published'
-
-    IMPORT_STATE_PENDING = 'pending'
-    IMPORT_STATE_COMPLETE = 'complete'
-
-    IMAGE_URL_BASE = 'https://s3-us-west-2.amazonaws.com/dyw-product-upload/images'
-
     SAMPLE_VARIANT_PRICE = 5.99
 
     require 'csv'
@@ -23,21 +11,19 @@ module Spree::Admin
     require 'net/ftp'
 
     before_action :set_import_state_labels, only: [:index]
-    # before_action :set_csv, only: [:show, :import]
-    before_action :set_item_display_data, only: [:show]
     before_action :destroy_products, only: [:destroy]
     after_action :create_items, only: [:create]
 
     def import
       response.headers['Content-Type'] = 'text/event-stream'
-      Spree::ProductImportItem.where(product_import_id: @product_import.id, state: [IMPORT_ITEM_STATE_PENDING, IMPORT_ITEM_STATE_ERROR]).each do |item|
+      Spree::ProductImportItem.where(product_import_id: @product_import.id, state: [Spree::ProductImportItem::STATE_PENDING, Spree::ProductImportItem::STATE_ERROR]).each do |item|
         item = create_product_from_import_item(item)
         response.stream.write 'event: update'+$/
         response.stream.write 'data: '+item.to_json+$/+$/
       end
 
-      if Spree::ProductImportItem.where(product_import_id: @product_import.id, state: [IMPORT_ITEM_STATE_PENDING, IMPORT_ITEM_STATE_ERROR]).empty?
-        @product_import.state = IMPORT_STATE_COMPLETE
+      if Spree::ProductImportItem.where(product_import_id: @product_import.id, state: [Spree::ProductImportItem::STATE_PENDING, Spree::ProductImportItem::STATE_ERROR]).empty?
+        @product_import.state = Spree::ProductImport::STATE_COMPLETE
         @product_import.completed_at = DateTime.now
         @product_import.save!
       end
@@ -61,9 +47,9 @@ module Spree::Admin
     def set_import_state_labels
       @product_imports.each do |import|
         case import.state
-          when IMPORT_STATE_PENDING
+          when Spree::ProductImport::STATE_PENDING
             import.state_label = 'warning'
-          when IMPORT_STATE_COMPLETE
+          when Spree::ProductImport::STATE_COMPLETE
             import.state_label = 'success'
         end
       end
@@ -98,52 +84,6 @@ module Spree::Admin
       end
     end
 
-    # Extract data to a hash for simple output
-    def set_item_display_data
-      @item_display_data = @product_import.product_import_items.map { |item| set_display_data item }
-    end
-
-    # Create a hash of item data for simple output
-    def set_display_data(item)
-      data = JSON.parse(item.json)
-      out = {
-        'id' => item.id,
-        'product_id' => item.product_id,
-        'sku' => item.sku,
-        'state' => item.state,
-        'name' => data['item_name'],
-        'brand' => data['brand'],
-        'collection' => data['main_category'],
-        'primary_category' => data['type'],
-        # 'secondary_category' => data['secondary_category'].present? ? data['secondary_category'] : nil
-      }
-
-      case item.state
-        when IMPORT_ITEM_STATE_PENDING
-          out['state_label'] = 'warning'
-        when IMPORT_ITEM_STATE_IMPORTED
-          out['state_label'] = 'success'
-        when IMPORT_ITEM_STATE_ERROR
-          out['state_label'] = 'error'
-      end
-
-      if item.product_id.nil?
-        published = nil
-      else
-        published = Spree::Product.find(item.product_id).available_on
-      end
-
-      if published
-        out['publish_state'] = IMPORT_ITEM_PUBLISH_STATE_PUBLISHED
-        out['publish_state_label'] = 'success'
-      else
-        out['publish_state'] = IMPORT_ITEM_PUBLISH_STATE_PENDING
-        out['publish_state_label'] = 'warning'
-      end
-
-      return out
-    end
-
     # Create a product from import data
     def create_product_from_import_item(item)
 
@@ -176,18 +116,22 @@ module Spree::Admin
         process_images product
 
         item.product_id = product.id
-        item.state = IMPORT_ITEM_STATE_IMPORTED
+        item.state = Spree::ProductImportItem::STATE_IMPORTED
         item.imported_at = DateTime.now
-        item.publish_state = product.available_on.nil? ? IMPORT_ITEM_PUBLISH_STATE_PENDING : IMPORT_ITEM_PUBLISH_STATE_PUBLISHED
+        item.publish_state = product.available_on.nil? ? Spree::ProductImportItem::PUBLISH_STATE_PENDING : Spree::ProductImportItem::PUBLISH_STATE_PUBLISHED
         item.save!
 
-      rescue
+      rescue StandardError => e
+
+        # puts 'XXXXXXXXXXXXXXXXXXXXX'
+        # puts e
+        # puts 'XXXXXXXXXXXXXXXXXXXXX'
 
         product.destroy
         item.product_id = nil
-        item.state = IMPORT_ITEM_STATE_ERROR
+        item.state = Spree::ProductImportItem::STATE_ERROR
         item.imported_at = nil
-        item.publish_state = IMPORT_ITEM_PUBLISH_STATE_PENDING
+        item.publish_state = Spree::ProductImportItem::PUBLISH_STATE_PENDING
         item.save!
 
       end
@@ -383,7 +327,15 @@ module Spree::Admin
       user = Spree::ProductImport.brewster_ftp_username
       password = Spree::ProductImport.brewster_ftp_password
 
-      paths = {'/WallpaperBooks/Layla/Images/72dpi/Patterns' => '', '/WallpaperBooks/Layla/Images/72dpi/Rooms' => '_Room'}
+      # ENV['BREWSTER_FTP_SERVER']
+      # ENV['BREWSTER_FTP_USERNAME']
+      # ENV['BREWSTER_FTP_PASSWORD']
+
+      # puts '=============================='
+      # puts server
+      # puts user
+      # puts password
+      # puts '=============================='
 
       begin
         ftp = Net::FTP.new(server)
@@ -392,9 +344,15 @@ module Spree::Admin
 
         image_count = 0
 
-        paths.each do |path, filename_suffix|
-          ftp.chdir(path)
-          filename = product.sku+filename_suffix+'.jpg'
+        @product_import.product_import_image_locations.each do |location|
+
+          ftp.chdir(location.path)
+          filename = location.filename_pattern.sub('<SKU>', product.sku)
+
+          # puts '=============================='
+          # puts location.path
+          # puts filename
+          # puts '=============================='
 
           img = File.new(filename, 'wb')
           img_data = ftp.getbinaryfile(filename, nil)
@@ -413,6 +371,7 @@ module Spree::Admin
         end
 
       rescue StandardError => e
+
         # puts '=============================='
         # puts e
         # puts '=============================='
@@ -420,9 +379,13 @@ module Spree::Admin
         # Do nothing here -- not all products have every type of image.
       end
 
+      # puts '=============================='
+      # puts 'IMAGE COUNT: ' + image_count.to_s
+      # puts '=============================='
+
       # Raise an exception if no images were successfully processed.
       unless image_count > 0
-        raise
+        raise Exception.new('No images created')
       end
 
     end

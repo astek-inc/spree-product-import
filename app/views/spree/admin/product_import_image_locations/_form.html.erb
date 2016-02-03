@@ -1,0 +1,11 @@
+<%= f.hidden_field :product_import_id, {:value => @product_import.id} %>
+
+<%= f.field_container :path, class: ['form-group'] do %>
+    <%= f.label :path, Spree.t(:path) %> <span class="required">*</span>
+    <%= f.text_field :path, :required => true, :class => 'form-control' %>
+<% end %>
+
+<%= f.field_container :filename_pattern, class: ['form-group'] do %>
+    <%= f.label :filename_pattern, Spree.t(:filename_pattern) %> <span class="required">*</span>
+    <%= f.text_field :filename_pattern, :required => true, :class => 'form-control' %>
+<% end %>

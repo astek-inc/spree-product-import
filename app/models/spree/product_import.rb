@@ -1,10 +1,14 @@
 module Spree
-  class ProductImport < ActiveRecord::Base
+  class ProductImport < Spree::Base
+
+    STATE_PENDING = 'pending'
+    STATE_COMPLETE = 'complete'
 
     # attr_reader :products
     attr_accessor :state_label
 
     has_many :product_import_items, :dependent => :destroy
+    has_many :product_import_image_locations, :dependent => :destroy
 
     has_attached_file :csv_file
     validates_attachment :csv_file, content_type: { content_type: ['text/plain', 'text/csv'] }

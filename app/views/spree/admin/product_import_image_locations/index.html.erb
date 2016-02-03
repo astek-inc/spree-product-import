@@ -1,0 +1,39 @@
+<h2 style="font-size: 20px;"><%= Spree.t(:product_import_image_locations) %></h2>
+
+<% content_for :page_actions do %>
+    <%= button_link_to(Spree.t(:new) + ' ' + Spree.t(:product_import_image_location), new_admin_product_import_product_import_image_location_url(@product_import), { class: "btn-success", icon: 'add', id: 'new_hero_carousel_item_link' }) if can? :create, Spree::HeroCarouselItem %>
+<% end %>
+
+<%= render partial: 'spree/admin/shared/product_import_tabs', locals: {current: :product_import_image_locations} %>
+
+<% if @product_import_image_locations.any? %>
+  <div id="product-import-image-locations-data-wrapper">
+    <table class="table" id='product_import_image_locations_data' data-hook>
+      <thead>
+      <th class="id"><%= Spree.t(:id) %></th>
+      <th class="path"><%= Spree.t(:path) %></th>
+      <th class="filename_pattern"><%= Spree.t(:filename_pattern) %></th>
+      <th class="actions"></th>
+      </thead>
+
+      <tbody>
+        <% @product_import_image_locations.each do |location| %>
+          <tr data-product-import-id="<%= location['id'] %>">
+            <td class="id"><%= location['id'] %></td>
+            <td class="path"><%= location['path'] %></td>
+            <td class="filename_pattern"><%= location['filename_pattern'] %></td>
+            <td class="actions">
+              <%= link_to_edit_url(edit_admin_product_import_product_import_image_location_url(@product_import, location), { :no_text => true }) %>
+              <%= link_to_delete(nil, {:url => '/admin/product_imports/'+@product_import.id.to_s+'/product_import_image_locations/'+location.id.to_s, :no_text => true }) %>
+            </td>
+          </tr>
+        <% end %>
+      </tbody>
+    </table>
+  </div>
+<% else %>
+  <div class="alert alert-info no-objects-found">
+    <%= Spree.t(:no_resource_found, resource: plural_resource_name(Spree::ProductImportImageLocation)) %>,
+    <%= link_to Spree.t(:add_one), new_admin_product_import_product_import_image_location_url(@product_import) %>!
+  </div>
+<% end %>

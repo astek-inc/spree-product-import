@@ -1,25 +1,14 @@
+<%= render partial: 'spree/admin/shared/product_import_tabs', locals: {current: :details} %>
+
 <%= render partial: 'spree/admin/shared/error_messages', locals: { target: @product_import } %>
 
-<% content_for :page_title do %>
-    <%= Spree.t(:editing) + ' ' + Spree.t(:product_import) %>
-<% end %>
-
 <%= form_for( [:admin, @product_import], html: { multipart: true } )do |f| %>
-    <fieldset data-hook="new_product_import">
-      <%= render partial: 'form', locals: { f: f } %>
-    </fieldset>
+  <fieldset data-hook="new_product_import">
+    <%= render partial: 'form', locals: { f: f } %>
+  </fieldset>
+  <% if @product_import.state == 'pending' %>
     <div class="form-actions">
       <%= render partial: 'spree/admin/shared/edit_resource_links' %>
     </div>
+  <% end %>
 <% end %>
-
-
-
-
-
-<!--<h1>Editing Product Import</h1>-->
-
-<%#= render 'form' %>
-
-<%#= link_to 'Show', [:admin, @product_import] %><!-- | -->
-<%#= link_to 'Back', admin_product_imports_path %>

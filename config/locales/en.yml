@@ -10,3 +10,7 @@ en:
     primary_category: 'Primary Category'
     secondary_category: 'Secondary Category'
     publish_state: 'Publish State'
+    product_import_item: 'Product Import Item'
+    product_import_items: 'Product Import Items'
+    product_import_image_location: 'Product Import Image Location'
+    product_import_image_locations: 'Product Import Image Locations'
