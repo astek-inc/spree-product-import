@@ -125,9 +125,9 @@ module Spree::Admin
         item.publish_state = product.available_on.nil? ? Spree::ProductImportItem::PUBLISH_STATE_PENDING : Spree::ProductImportItem::PUBLISH_STATE_PUBLISHED
         item.save!
 
-      rescue StandardError => e
+      rescue Exception => e
 
-        @log.puts([Time.now.to_s, @product_import.id.to_s,  item.sku, e.to_s].join("\t"))
+        @log.puts([Time.now.to_s, 'Import ID: ' + @product_import.id.to_s,  'SKU: ' + item.sku, e.to_s].join("\t"))
 
         # puts '=========================================='
         # puts e
@@ -343,31 +343,26 @@ module Spree::Admin
       # puts password
       # puts '=============================='
 
+      image_count = 0
+
       begin
         ftp = Net::FTP.new(server)
         ftp.passive = true
         ftp.login user, password
 
-        image_count = 0
-
         @product_import.product_import_image_locations.each do |location|
 
           ftp.chdir(location.path)
           filename = filename_from_sku product.sku, location.filename_pattern
-          #filename = location.filename_pattern.sub('<SKU>', product.sku)
 
-          # puts '=============================='
-          # puts location.path
-          # puts filename
-          # puts '=============================='
-
-          img = File.new(filename, 'wb')
           img_data = ftp.getbinaryfile(filename, nil)
-          img.write(img_data)
-          Spree::Image.create attachment: img, viewable: product.master
-          File.delete(img.path)
-
-          image_count += 1
+          unless img_data.nil?
+            img = File.new(filename, 'wb')
+            img.write(img_data)
+            Spree::Image.create attachment: img, viewable: product.master
+            File.delete(img.path)
+            image_count += 1
+          end
 
           # Can't get this to work -- Paperclip throws an error
           # img_data = ftp.getbinaryfile(filename, nil)
