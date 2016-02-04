@@ -5,6 +5,8 @@ module Spree::Admin
 
     SAMPLE_VARIANT_PRICE = 5.99
 
+    LOG_FILE = Rails.root + 'log/product_import.log'
+
     require 'csv'
     require 'open-uri'
     require 'json'
@@ -15,6 +17,8 @@ module Spree::Admin
     after_action :create_items, only: [:create]
 
     def import
+      @log = File.open(LOG_FILE, 'a')
+
       response.headers['Content-Type'] = 'text/event-stream'
       Spree::ProductImportItem.where(product_import_id: @product_import.id, state: [Spree::ProductImportItem::STATE_PENDING, Spree::ProductImportItem::STATE_ERROR]).each do |item|
         item = create_product_from_import_item(item)
@@ -122,10 +126,11 @@ module Spree::Admin
         item.save!
 
       rescue StandardError => e
+        @log.puts(@product_import.id.to_s + '    ' + item.sku + '    ' + e.to_s)
 
-        # puts 'XXXXXXXXXXXXXXXXXXXXX'
+        # puts '=========================================='
         # puts e
-        # puts 'XXXXXXXXXXXXXXXXXXXXX'
+        # puts '=========================================='
 
         product.destroy
         item.product_id = nil
@@ -347,7 +352,8 @@ module Spree::Admin
         @product_import.product_import_image_locations.each do |location|
 
           ftp.chdir(location.path)
-          filename = location.filename_pattern.sub('<SKU>', product.sku)
+          filename = filename_from_sku product.sku, location.filename_pattern
+          #filename = location.filename_pattern.sub('<SKU>', product.sku)
 
           # puts '=============================='
           # puts location.path
@@ -388,6 +394,20 @@ module Spree::Admin
         raise Exception.new('No images created')
       end
 
+    end
+
+    def filename_from_sku(sku, filename_pattern)
+      re = /^<SKU( replace="([^"]*)")?>/
+      replacements = re.match(filename_pattern)[2]
+
+      unless replacements.nil?
+        replacements.split(';').each do |pair|
+          find, replace = pair.split(',')
+          sku = sku.sub(find, replace)
+        end
+      end
+
+      return filename_pattern.sub(re, sku)
     end
   end
 end
