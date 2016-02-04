@@ -1,12 +1,14 @@
-  <%= f.field_container :name, class: ['form-group'] do %>
-    <%= f.label :name, Spree.t(:name) %> <span class="required">*</span>
-    <%= f.text_field :name, :required => true, :class => 'form-control' %>
-  <% end %>
+<%= f.field_container :name, class: ['form-group'] do %>
+  <%= f.label :name, Spree.t(:name) %> <span class="required">*</span>
+  <%= f.text_field :name, :required => true, :class => 'form-control' %>
+<% end %>
 
-  <%= f.field_container :csv_file, class: ['form-group'] do %>
-    <%= f.label :csv_file, Spree.t(:csv_file) %> <span class="required">*</span>
-      <% unless @product_import.csv_file.nil? %>
-          <p style="margin-left: 20px;"><%= @product_import.csv_file %></p>
-      <% end %>
-    <%= f.file_field :csv_file, :required => true, :class => 'form-control' %>
+<%= f.field_container :csv_file, class: ['form-group'] do %>
+  <%= f.label :csv_file, Spree.t(:csv_file) %> <span class="required">*</span>
+  <% unless @product_import.csv_file.nil? %>
+      <p style="margin-left: 20px;"><%= @product_import.csv_file %></p>
   <% end %>
+    <% unless @product_import.state == Spree::ProductImport::STATE_COMPLETE %>
+      <%= f.file_field :csv_file, :required => true, :class => 'form-control' %>
+    <% end %>
+<% end %>

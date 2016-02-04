@@ -1,7 +1,7 @@
-<h2 style="font-size: 20px;"><%= Spree.t(:product_import_image_locations) %></h2>
-
-<% content_for :page_actions do %>
-    <%= button_link_to(Spree.t(:new) + ' ' + Spree.t(:product_import_image_location), new_admin_product_import_product_import_image_location_url(@product_import), { class: "btn-success", icon: 'add', id: 'new_hero_carousel_item_link' }) if can? :create, Spree::HeroCarouselItem %>
+<% unless @product_import.state == Spree::ProductImport::STATE_COMPLETE %>
+  <% content_for :page_actions do %>
+    <%= button_link_to(Spree.t(:new) + ' ' + Spree.t(:image_location), new_admin_product_import_product_import_image_location_url(@product_import), { class: "btn-success", icon: 'add', id: 'new_hero_carousel_item_link' }) if can? :create, Spree::HeroCarouselItem %>
+  <% end %>
 <% end %>
 
 <%= render partial: 'spree/admin/shared/product_import_tabs', locals: {current: :product_import_image_locations} %>
@@ -23,8 +23,10 @@
             <td class="path"><%= location['path'] %></td>
             <td class="filename_pattern"><%= location['filename_pattern'] %></td>
             <td class="actions">
-              <%= link_to_edit_url(edit_admin_product_import_product_import_image_location_url(@product_import, location), { :no_text => true }) %>
-              <%= link_to_delete(nil, {:url => '/admin/product_imports/'+@product_import.id.to_s+'/product_import_image_locations/'+location.id.to_s, :no_text => true }) %>
+              <% unless @product_import.state == Spree::ProductImport::STATE_COMPLETE %>
+                <%= link_to_edit_url(edit_admin_product_import_product_import_image_location_url(@product_import, location), { :no_text => true }) %>
+                <%= link_to_delete(nil, {:url => '/admin/product_imports/'+@product_import.id.to_s+'/product_import_image_locations/'+location.id.to_s, :no_text => true }) %>
+              <% end %>
             </td>
           </tr>
         <% end %>

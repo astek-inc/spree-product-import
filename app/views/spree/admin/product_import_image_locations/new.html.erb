@@ -1,8 +1,5 @@
 <%= render partial: 'spree/admin/shared/error_messages', locals: { target: @product_import_image_location } %>
-
-<% content_for :page_title do %>
-    <%= Spree.t(:new) + ' ' + Spree.t(:product_import_image_location) %>
-<% end %>
+<%= render partial: 'spree/admin/shared/product_import_tabs', locals: {current: :product_import_image_locations} %>
 
 <%= form_for( [:admin, @product_import, @product_import_image_location] )do |f| %>
     <fieldset data-hook="new_product_import_image_location">
