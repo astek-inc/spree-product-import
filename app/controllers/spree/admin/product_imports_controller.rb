@@ -94,7 +94,7 @@ module Spree::Admin
       begin
 
         item_data = JSON.parse(item.json)
-        product = Spree::Product.create(
+        product = Spree::Product.create!(
           {
             sku: item.sku,
             name: item_data['item_name'],
@@ -126,13 +126,14 @@ module Spree::Admin
         item.save!
 
       rescue StandardError => e
-        @log.puts(@product_import.id.to_s + '    ' + item.sku + '    ' + e.to_s)
+
+        @log.puts([Time.now.to_s, @product_import.id.to_s,  item.sku, e.to_s].join("\t"))
 
         # puts '=========================================='
         # puts e
         # puts '=========================================='
 
-        product.destroy
+        product.destroy unless product.nil?
         item.product_id = nil
         item.state = Spree::ProductImportItem::STATE_ERROR
         item.imported_at = nil
