@@ -3,14 +3,14 @@ module Spree::Admin
 
     include ActionController::Live
 
-    SAMPLE_VARIANT_PRICE = 5.99
-
-    LOG_FILE = Rails.root + 'log/product_import.log'
-
     require 'csv'
     require 'open-uri'
     require 'json'
     require 'net/ftp'
+
+    SAMPLE_VARIANT_PRICE = 5.99
+
+    LOG_FILE = Rails.root + 'log/product_import.log'
 
     before_action :set_import_state_labels, only: [:index]
     before_action :destroy_products, only: [:destroy]
@@ -128,10 +128,6 @@ module Spree::Admin
       rescue Exception => e
 
         @log.puts([Time.now.to_s, 'Import ID: ' + @product_import.id.to_s,  'SKU: ' + item.sku, e.to_s].join("\t"))
-
-        # puts '=========================================='
-        # puts e
-        # puts '=========================================='
 
         product.destroy unless product.nil?
         item.product_id = nil
@@ -325,10 +321,6 @@ module Spree::Admin
     # Process associated product images. Get image from catalog site, attach to product.
     def process_images(product)
 
-      # server = 'ftpimages.brewsterhomefashions.com'
-      # user = 'dealers'
-      # password = 'Brewster#1'
-
       server = Spree::ProductImport.brewster_ftp_server
       user = Spree::ProductImport.brewster_ftp_username
       password = Spree::ProductImport.brewster_ftp_password
@@ -336,12 +328,6 @@ module Spree::Admin
       # ENV['BREWSTER_FTP_SERVER']
       # ENV['BREWSTER_FTP_USERNAME']
       # ENV['BREWSTER_FTP_PASSWORD']
-
-      # puts '=============================='
-      # puts server
-      # puts user
-      # puts password
-      # puts '=============================='
 
       image_count = 0
 
@@ -364,26 +350,21 @@ module Spree::Admin
             image_count += 1
           end
 
-          # Can't get this to work -- Paperclip throws an error
+          # # Can't get this to work -- Paperclip throws an error: "Paperclip::Errors::NotIdentifiedByImageMagickError"
           # img_data = ftp.getbinaryfile(filename, nil)
           # data_uri = 'data:image/jpeg;base64,'+img_data
           # img = Paperclip.io_adapters.for(data_uri)
           # img.original_filename = filename
+          # img.content_type = 'image/jpeg'
           # Spree::Image.create attachment: img, viewable: product.master
         end
 
       rescue StandardError => e
 
-        # puts '=============================='
-        # puts e
-        # puts '=============================='
-
+        @log.puts([Time.now.to_s, 'Import ID: ' + @product_import.id.to_s, 'SKU: ' + product.sku, e.to_s].join("\t"))
         # Do nothing here -- not all products have every type of image.
+        
       end
-
-      # puts '=============================='
-      # puts 'IMAGE COUNT: ' + image_count.to_s
-      # puts '=============================='
 
       # Raise an exception if no images were successfully processed.
       unless image_count > 0
@@ -392,6 +373,7 @@ module Spree::Admin
 
     end
 
+    # Use pattern to generate filename from SKU.
     def filename_from_sku(sku, filename_pattern)
       re = /^<SKU( replace="([^"]*)")?>/
       replacements = re.match(filename_pattern)[2]
