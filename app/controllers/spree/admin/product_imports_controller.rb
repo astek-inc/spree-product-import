@@ -7,7 +7,7 @@ module Spree::Admin
     require 'open-uri'
     require 'json'
     require 'net/ftp'
-
+    
     SAMPLE_VARIANT_PRICE = 5.99
 
     LOG_FILE = Rails.root + 'log/product_import.log'
@@ -78,6 +78,12 @@ module Spree::Admin
     def create_items
       set_csv
       @csv.each do |csv_item|
+
+        # We get an error trying to convert accented characters if we don't do this
+        csv_item.each do |k, v|
+          csv_item[k] = v.force_encoding('UTF-8') unless v.nil?
+        end
+
         Spree::ProductImportItem.create!(
           {
             product_import_id: @product_import.id,
@@ -85,6 +91,7 @@ module Spree::Admin
             json: csv_item.to_json
           }
         )
+
       end
     end
 
