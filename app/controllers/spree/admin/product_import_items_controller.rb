@@ -3,6 +3,7 @@ module Spree::Admin
 
     before_action :load_product_import, except: [:create, :update]
     # before_action :set_item_display_data, only: [:index]
+    after_action :update_product_import_status, only: :destroy
 
     def index
       @product_import_items = Spree::ProductImportItem.where(product_import_id: params[:product_import_id])
@@ -64,6 +65,16 @@ module Spree::Admin
       end
 
       return out
+    end
+
+    # If removal of an item means there are no more items with a status of pending or error,
+    # set import status to complete.
+    def update_product_import_status
+      if Spree::ProductImportItem.where(product_import_id: @product_import.id, state: [Spree::ProductImportItem::STATE_PENDING, Spree::ProductImportItem::STATE_ERROR]).empty?
+        @product_import.state = Spree::ProductImport::STATE_COMPLETE
+        @product_import.completed_at = DateTime.now
+        @product_import.save!
+      end
     end
 
   end

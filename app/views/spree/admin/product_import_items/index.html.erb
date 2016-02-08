@@ -91,7 +91,7 @@
                 <%= link_to_with_icon('eye-open', nil, product_url(item['product_id']), { :name => 'View', :no_text => true, :class => 'btn btn-primary btn-sm', :target => '_blank' }) %>
                 <%= link_to_edit_url(edit_admin_product_url(item['product_id']), { :no_text => true, :target => '_blank' }) %>
             <% else %>
-                <%= link_to_delete(item, :no_text => true) %>
+                <%= link_to_delete :product_import_item, :url => admin_product_import_product_import_item_url(@product_import.id, item['id']), :no_text => true %>
             <% end %>
           </td>
         </tr>
