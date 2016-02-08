@@ -140,6 +140,7 @@ module Spree::Admin
         product.destroy unless product.nil?
         item.product_id = nil
         item.state = Spree::ProductImportItem::STATE_ERROR
+        item.state_message = e.to_s
         item.imported_at = nil
         item.publish_state = Spree::ProductImportItem::PUBLISH_STATE_PENDING
         item.save!

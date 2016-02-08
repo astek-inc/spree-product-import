@@ -34,6 +34,7 @@ module Spree::Admin
           'product_id' => item.product_id,
           'sku' => item.sku,
           'state' => item.state,
+          'state_message' => item.state_message,
           'name' => data['item_name'],
           'brand' => data['brand'],
           'collection' => data['main_category'],

@@ -55,6 +55,10 @@
       import_products();
     });
   });
+
+  $(function() {
+    $('td.state span.label-error').tooltip();
+  })
 </script>
 
 <div id="product-import-items-data-wrapper">
@@ -84,7 +88,7 @@
           <!--<td class="secondary_category"><%#= item['secondary_category'] %></td>-->
           <!--<td class="brand"><%#= item['brand'] %></td>-->
           <!--<td class="collection"><%#= item['collection'] %></td>-->
-          <td class="state"><span class="label label-<%= item['state_label'] %>"><%= item['state'] %></span></td>
+          <td class="state"><span class="label label-<%= item['state_label'] %>"<% if item['state'] == 'error' %> title="<%= item['state_message'] %>"<% end %>><%= item['state'] %></span></td>
           <td class="publish_state"><span class="label label-<%= item['publish_state_label'] %>"><%= item['publish_state'] %></span></td>
           <td class="actions">
             <% unless item['product_id'].nil? %>
