@@ -135,6 +135,7 @@ module Spree::Admin
       rescue Exception => e
 
         @log.puts([Time.now.to_s, 'Import ID: ' + @product_import.id.to_s,  'SKU: ' + item.sku, e.to_s].join("\t"))
+        puts ['Import ID: ' + @product_import.id.to_s,  'SKU: ' + item.sku, e.to_s].join("\t")
 
         product.destroy unless product.nil?
         item.product_id = nil
