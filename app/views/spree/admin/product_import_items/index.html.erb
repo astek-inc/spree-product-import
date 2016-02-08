@@ -90,6 +90,8 @@
             <% unless item['product_id'].nil? %>
                 <%= link_to_with_icon('eye-open', nil, product_url(item['product_id']), { :name => 'View', :no_text => true, :class => 'btn btn-primary btn-sm', :target => '_blank' }) %>
                 <%= link_to_edit_url(edit_admin_product_url(item['product_id']), { :no_text => true, :target => '_blank' }) %>
+            <% else %>
+                <%= link_to_delete(item, :no_text => true) %>
             <% end %>
           </td>
         </tr>
