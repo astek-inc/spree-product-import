@@ -14,7 +14,7 @@ module Spree::Admin
 
     def permitted_resource_params
       params.require(:product_import_item).
-          permit(:id, :product_import_id, :product_id, :sku, :json, :state, :publish_state, :imported_at)
+          permit(:id, :product_import_id, :product_id, :sku, :json, :state, :state_message, :publish_state, :imported_at)
     end
 
     def load_product_import
