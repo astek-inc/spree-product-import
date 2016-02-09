@@ -22,6 +22,9 @@
     row = $('#product_import_items_data tr[data-product-import-id="'+item.id+'"]');
     row.find('td.product_id').html(item.product_id);
     row.find('td.state span').html(item.state).removeClass('label-warning label-error').addClass(labelClassForState(item.state));
+    if (item.state == 'error') {
+      row.find('td.state span').attr('title', item.state_message).tooltip();
+    }
     row.find('td.publish_state span').html(item.publish_state);
     if (item.publish_state == 'published') {
       row.find('td.publish_state span').removeClass('label-warning').addClass('label-success');
