@@ -11,7 +11,7 @@ module Spree
     has_many :product_import_image_locations, :dependent => :destroy
 
     has_attached_file :csv_file
-    validates_attachment :csv_file, content_type: { content_type: ['text/plain', 'text/csv'] }
+    validates_attachment :csv_file, content_type: { content_type: ['text/plain', 'text/csv', 'text/comma-separated-values', 'application/vnd.ms-excel'] }
 
     mattr_accessor :brewster_ftp_server
     mattr_accessor :brewster_ftp_username
