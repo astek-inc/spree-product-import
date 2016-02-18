@@ -128,6 +128,7 @@ module Spree::Admin
 
         item.product_id = product.id
         item.state = Spree::ProductImportItem::STATE_IMPORTED
+        item.state_message = nil
         item.imported_at = DateTime.now
         item.publish_state = product.available_on.nil? ? Spree::ProductImportItem::PUBLISH_STATE_PENDING : Spree::ProductImportItem::PUBLISH_STATE_PUBLISHED
         item.save!
