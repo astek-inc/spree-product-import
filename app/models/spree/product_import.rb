@@ -17,6 +17,12 @@ module Spree
     mattr_accessor :brewster_ftp_username
     mattr_accessor :brewster_ftp_password
 
+    mattr_accessor :admin_product_imports_per_page
+
+    default_scope { order(created_at: :desc) }
+
+    self.whitelisted_ransackable_attributes =  %w[created_at]
+
     # def initialize *args
     #   super
     #   @products ||= Array.new

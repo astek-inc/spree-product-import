@@ -16,6 +16,10 @@ module Spree::Admin
     before_action :destroy_products, only: [:destroy]
     after_action :create_items, only: [:create]
 
+    def index
+      respond_with(@collection)
+    end
+
     def import
       @log = File.open(LOG_FILE, 'a')
 
@@ -41,10 +45,29 @@ module Spree::Admin
         response.stream.close
     end
 
-    private
+    protected
 
     def permitted_resource_params
       params.require(:product_import).permit( :name, :csv_file )
+    end
+
+    private
+
+    def collection
+      return @collection if @collection.present?
+
+      params[:q] ||= {}
+
+      params[:q][:s] ||= 'created_at desc'
+      @collection = super
+
+      # @search needs to be defined as this is passed to search_form_for
+      # This is to include all products and not just deleted products.
+      @search = @collection.ransack(params[:q])
+      @collection = @search.result.
+          page(params[:page]).
+          per(params[:per_page] || Spree::ProductImport.admin_product_imports_per_page)
+      @collection
     end
 
     # Set value for import state labels
