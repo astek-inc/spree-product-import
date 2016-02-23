@@ -133,7 +133,7 @@ module Spree::Admin
         item.publish_state = product.available_on.nil? ? Spree::ProductImportItem::PUBLISH_STATE_PENDING : Spree::ProductImportItem::PUBLISH_STATE_PUBLISHED
         item.save!
 
-      rescue Exception => e
+      rescue => e
 
         @log.puts([Time.now.to_s, 'Import ID: ' + @product_import.id.to_s,  'SKU: ' + item.sku, e.to_s].join("\t"))
         puts ['PRODUCT IMPORT ERROR', 'Import ID: ' + @product_import.id.to_s,  'SKU: ' + item.sku, e.to_s].join("\t")
@@ -318,6 +318,9 @@ module Spree::Admin
 
     # Assign "Ordering Information" items.
     def assign_order_information(product, item_data)
+
+      product.order_info_items << Spree::OrderInfoItem.where(name: 'Please confirm availability -- 3-8 week lead time').take
+
       case item_data['type']
         when 'Wallpaper'
           product.order_info_items << Spree::OrderInfoItem.where(name: 'Colors may vary - please order sample').take
@@ -335,18 +338,14 @@ module Spree::Admin
       user = Spree::ProductImport.brewster_ftp_username
       password = Spree::ProductImport.brewster_ftp_password
 
-      # ENV['BREWSTER_FTP_SERVER']
-      # ENV['BREWSTER_FTP_USERNAME']
-      # ENV['BREWSTER_FTP_PASSWORD']
+      ftp = Net::FTP.new(server)
+      ftp.passive = true
+      ftp.login user, password
 
       image_count = 0
 
-      begin
-        ftp = Net::FTP.new(server)
-        ftp.passive = true
-        ftp.login user, password
-
-        @product_import.product_import_image_locations.each do |location|
+      @product_import.product_import_image_locations.each do |location|
+        begin
 
           ftp.chdir(location.path)
           filename = filename_from_sku product.sku, location.filename_pattern
@@ -367,18 +366,19 @@ module Spree::Admin
           # img.original_filename = filename
           # img.content_type = 'image/jpeg'
           # Spree::Image.create attachment: img, viewable: product.master
+
+        rescue => e
+
+          @log.puts([Time.now.to_s, 'Import ID: ' + @product_import.id.to_s, 'SKU: ' + product.sku, e.to_s].join("\t"))
+          # Do nothing here -- not all products have every type of image.
+          next
+
         end
-
-      rescue StandardError => e
-
-        @log.puts([Time.now.to_s, 'Import ID: ' + @product_import.id.to_s, 'SKU: ' + product.sku, e.to_s].join("\t"))
-        # Do nothing here -- not all products have every type of image.
-
       end
 
       # Raise an exception if no images were successfully processed.
       unless image_count > 0
-        raise Exception.new('No images created')
+        raise 'No images created'
       end
 
     end
