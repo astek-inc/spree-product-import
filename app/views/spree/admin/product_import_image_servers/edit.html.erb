@@ -1,0 +1,16 @@
+<%= render partial: 'spree/admin/shared/error_messages', locals: { target: @product_import_image_server } %>
+
+<% content_for :page_title do %>
+    <%= Spree.t(:editing) + ' ' + Spree.t(:product_import_image_server) %>
+<% end %>
+<%= render partial: 'spree/admin/shared/error_messages', locals: { target: @product_import_image_server } %>
+
+<%= form_for( [:admin, @product_import_image_server] )do |f| %>
+    <fieldset data-hook="new_product_import_image_server">
+      <%= render partial: 'form', locals: { f: f } %>
+    </fieldset>
+
+    <div class="form-actions">
+      <%= render partial: 'spree/admin/shared/edit_resource_links' %>
+    </div>
+<% end %>

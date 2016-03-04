@@ -7,8 +7,13 @@ module Spree
     # attr_reader :products
     attr_accessor :state_label
 
+    has_one :product_import_image_server
+
     has_many :product_import_items, :dependent => :destroy
     has_many :product_import_image_locations, :dependent => :destroy
+
+    validates :name, presence: true
+    validates :product_import_image_server_id, presence: true
 
     has_attached_file :csv_file
     validates_attachment :csv_file, content_type: { content_type: ['text/plain', 'text/csv', 'text/comma-separated-values', 'application/vnd.ms-excel'] }

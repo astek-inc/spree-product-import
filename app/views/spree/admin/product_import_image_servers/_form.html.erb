@@ -1,0 +1,24 @@
+<%= f.field_container :name, class: ['form-group'] do %>
+    <%= f.label :name, Spree.t(:name) %> <span class="required">*</span>
+    <%= f.text_field :name, :required => true, :class => 'form-control' %>
+<% end %>
+
+<%= f.field_container :protocol, class: ['form-group'] do %>
+    <%= f.label :protocol, Spree.t(:protocol) %> <span class="required">*</span>
+    <%= f.text_field :protocol, :required => true, :class => 'form-control' %>
+<% end %>
+
+<%= f.field_container :url, class: ['form-group'] do %>
+    <%= f.label :url, Spree.t(:url) %> <span class="required">*</span>
+    <%= f.text_field :url, :required => true, :class => 'form-control' %>
+<% end %>
+
+<%= f.field_container :username, class: ['form-group'] do %>
+    <%= f.label :username, Spree.t(:username) %> <span class="required">*</span>
+    <%= f.text_field :username, :required => true, :class => 'form-control' %>
+<% end %>
+
+<%= f.field_container :password, class: ['form-group'] do %>
+    <%= f.label :password, Spree.t(:password) %> <span class="required">*</span>
+    <%= f.text_field :password, :required => true, :class => 'form-control' %>
+<% end %>

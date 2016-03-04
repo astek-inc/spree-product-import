@@ -14,6 +14,7 @@ module Spree::Admin
 
     before_action :set_import_state_labels, only: [:index]
     before_action :destroy_products, only: [:destroy]
+    before_action :get_product_import_image_servers, only: [:new, :edit]
     after_action :create_items, only: [:create]
 
     def index
@@ -48,7 +49,7 @@ module Spree::Admin
     protected
 
     def permitted_resource_params
-      params.require(:product_import).permit( :name, :csv_file )
+      params.require(:product_import).permit( :name, :product_import_image_server_id, :csv_file )
     end
 
     private
@@ -95,6 +96,10 @@ module Spree::Admin
           Spree::Product.destroy(item.product_id)
         end
       end
+    end
+
+    def get_product_import_image_servers
+      @product_import_image_servers = Spree::ProductImportImageServer.all
     end
 
     # Create product import items for each row of the csv file
@@ -357,9 +362,11 @@ module Spree::Admin
     # Process associated product images. Get image from catalog site, attach to product.
     def process_images(product)
 
-      server = Spree::ProductImport.brewster_ftp_server
-      user = Spree::ProductImport.brewster_ftp_username
-      password = Spree::ProductImport.brewster_ftp_password
+      product_import_image_server = Spree::ProductImportImageServer.find(@product_import.product_import_image_server_id)
+
+      server = product_import_image_server.url
+      user = product_import_image_server.username
+      password = product_import_image_server.password
 
       ftp = Net::FTP.new(server)
       ftp.passive = true
