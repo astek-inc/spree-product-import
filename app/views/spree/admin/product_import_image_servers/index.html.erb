@@ -9,26 +9,28 @@
 <% if @collection.any? %>
     <table class="table" id='product_import_image_servers' data-hook>
       <thead>
-      <tr data-hook="product_import_image_servers_header">
-        <th class="name"><%= Spree.t(:name) %></th>
-        <th class="protocol"><%= Spree.t(:protocol) %></th>
-        <th class="url"><%= Spree.t(:url) %></th>
-        <th class="actions"></th>
-      </tr>
+        <tr data-hook="product_import_image_servers_header">
+          <th class="id"><%= Spree.t(:id) %></th>
+          <th class="name"><%= Spree.t(:name) %></th>
+          <!--<th class="protocol"><%#= Spree.t(:protocol) %></th>-->
+          <th class="url"><%= Spree.t(:url) %></th>
+          <th class="actions"></th>
+        </tr>
       </thead>
 
       <tbody>
-      <% @collection.each do |server| %>
-          <tr>
-            <td class="name"><%= server.name %></td>
-            <td class="protocol"><%= server.protocol %></td>
-            <td class="url"><%= server.url %></td>
-            <td class="actions actions-2 text-right">
-              <%= link_to_edit(server, :no_text => true) %>
-              <%= link_to_delete(server, :no_text => true) %>
-            </td>
-          </tr>
-      <% end %>
+        <% @collection.each do |server| %>
+            <tr>
+              <td class="id"><%= server.id %></td>
+              <td class="name"><%= server.name %></td>
+              <!--<td class="protocol"><%#= server.protocol %></td>-->
+              <td class="url"><%= server.url %></td>
+              <td class="actions actions-2 text-right">
+                <%= link_to_edit(server, :no_text => true) %>
+                <%= link_to_delete(server, :no_text => true) %>
+              </td>
+            </tr>
+        <% end %>
       </tbody>
     </table>
 <% else %>
