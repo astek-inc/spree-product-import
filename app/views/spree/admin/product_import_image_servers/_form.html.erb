@@ -3,10 +3,13 @@
     <%= f.text_field :name, :required => true, :class => 'form-control' %>
 <% end %>
 
-<%= f.field_container :protocol, class: ['form-group'] do %>
-    <%= f.label :protocol, Spree.t(:protocol) %> <span class="required">*</span>
-    <%= f.text_field :protocol, :required => true, :class => 'form-control' %>
-<% end %>
+<%#= f.field_container :protocol, class: ['form-group'] do %>
+    <%#= f.label :protocol, Spree.t(:protocol) %> <span class="required">*</span>
+    <%#= f.text_field :protocol, :required => true, :class => 'form-control' %>
+<%# end %>
+
+<%= f.hidden_field :protocol, { :value => 'ftp' } %>
+
 
 <%= f.field_container :url, class: ['form-group'] do %>
     <%= f.label :url, Spree.t(:url) %> <span class="required">*</span>
