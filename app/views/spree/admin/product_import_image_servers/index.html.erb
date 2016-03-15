@@ -12,7 +12,7 @@
         <tr data-hook="product_import_image_servers_header">
           <th class="id"><%= Spree.t(:id) %></th>
           <th class="name"><%= Spree.t(:name) %></th>
-          <!--<th class="protocol"><%#= Spree.t(:protocol) %></th>-->
+          <th class="protocol"><%= Spree.t(:protocol) %></th>
           <th class="url"><%= Spree.t(:url) %></th>
           <th class="actions"></th>
         </tr>
@@ -23,7 +23,7 @@
             <tr>
               <td class="id"><%= server.id %></td>
               <td class="name"><%= server.name %></td>
-              <!--<td class="protocol"><%#= server.protocol %></td>-->
+              <td class="protocol"><%= Spree::ProductImportImageServer::PROTOCOLS.find { |p| p[:name] == server.protocol }[:label] %></td>
               <td class="url"><%= server.url %></td>
               <td class="actions actions-2 text-right">
                 <%= link_to_edit(server, :no_text => true) %>
