@@ -221,13 +221,10 @@ module Spree::Admin
       variant.save!
     end
 
-    # Set sale unit, if it's possible to derive it from the information available
+    # Set sale unit, if provided
     def set_sale_unit(item_data)
-      case item_data['type']
-        when 'Wallpaper'
-          if item_data['default_qnty'].to_i == 2
-            return Spree::SaleUnit.find_by(name: 'Single roll')
-          end
+      unless item_data['sold_by'].nil?
+        return Spree::SaleUnit.find_or_create_by(name: item_data['sold_by'])
       end
     end
 
@@ -335,14 +332,21 @@ module Spree::Admin
         product.set_property('pre-pasted', item_data['prepasted'])
       end
 
-      case item_data['type']
-        when 'Wallpaper'
-          if item_data['default_qnty'].to_i == 2
-            product.set_property('sold by', 'Single roll')
-            product.set_property('count by', 2)
-          end
+      unless item_data['margin_trim'].nil?
+        product.set_property('margin trim', item_data['margin_trim'])
       end
 
+      unless item_data['sold_by'].nil?
+        product.set_property('sold by', item_data['sold_by'])
+      end
+
+      unless item_data['count_by'].nil?
+        product.set_property('count by', item_data['count_by'])
+      end
+
+      unless item_data['minimum_qnty'].nil?
+        product.set_property('minimum quantity', item_data['minimum_qnty'])
+      end
     end
 
     # Assign "Ordering Information" items.
