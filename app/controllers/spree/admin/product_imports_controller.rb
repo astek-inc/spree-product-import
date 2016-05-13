@@ -135,6 +135,7 @@ module Spree::Admin
             sku: item.sku,
             name: item_data['item_name'],
             available_on: item_data['publish_status'].to_i == 1 ? Time.now : nil,
+            expires_on: expires_on(item_data),
             description: item_data['brief_description'],
             price: item_data['price'],
             tax_category: Spree::TaxCategory.find_by_name('Taxable'),
@@ -221,6 +222,13 @@ module Spree::Admin
       variant.save!
     end
 
+    # If expiration date is set, format it for insertion into database.
+    def expires_on(item_data)
+      unless item_data['expiration_date'].nil?
+        Date.strptime(item_data['expiration_date'], '%m/%d/%Y').to_time
+      end
+    end
+
     # Set sale unit, if provided
     def set_sale_unit(item_data)
       unless item_data['sold_by'].nil?
@@ -278,17 +286,17 @@ module Spree::Admin
 
     # Assign a brand to the product.
     def assign_branding(product, item_data)
-      # First, get base brand taxon (or create it). Then add the item's brand.
-      brands_taxonomy = Spree::Taxonomy.find_or_create_by(name: 'Brands')
-      brands_base = Spree::Taxon.find_by_name('Brands')
+      # First, get base brand taxon.
+      categories_taxonomy = Spree::Taxonomy.find_or_create_by(name: 'Categories')
+      brands_base = Spree::Taxon.where(name: 'Brands', taxonomy: categories_taxonomy).first_or_create
 
       # Find brand taxon by name, or create it. Append it to the item's taxons.
-      taxon = Spree::Taxon.where(name: item_data['brand'], taxonomy_id: brands_base.taxonomy_id).first_or_create
+      taxon = Spree::Taxon.where(name: item_data['brand'], taxonomy: categories_taxonomy).first_or_create
       brands_base.children << taxon
       product.taxons << taxon
 
       # Now get the secondary brand (collection) under the main brand, or create it if it doesn't exist
-      child_taxon = Spree::Taxon.where(name: item_data['main_category'], parent: taxon, taxonomy: brands_taxonomy).first_or_create
+      child_taxon = Spree::Taxon.where(name: item_data['main_category'], parent: taxon, taxonomy: categories_taxonomy).first_or_create
       taxon.children << child_taxon
       product.taxons << child_taxon
 
@@ -346,6 +354,10 @@ module Spree::Admin
 
       unless item_data['minimum_qnty'].nil?
         product.set_property('minimum quantity', item_data['minimum_qnty'])
+      end
+
+      unless item_data['mural_dimensions'].nil?
+        product.set_property('mural dimensions', item_data['mural_dimensions'])
       end
     end
 
@@ -427,7 +439,7 @@ module Spree::Admin
       end
     end
 
-    # Get images form a web server.
+    # Get images from a web server.
     def images_by_http(product, image_server)
 
       image_count = 0
