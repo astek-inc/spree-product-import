@@ -11,6 +11,8 @@ module Spree::Admin
     
     SAMPLE_VARIANT_PRICE = 5.99
 
+    MURAL_PANEL_WIDTH_DEFAULT = 52
+
     LOG_FILE = Rails.root + 'log/product_import.log'
 
     before_action :set_import_state_labels, only: [:index]
@@ -356,9 +358,27 @@ module Spree::Admin
         product.set_property('minimum quantity', item_data['minimum_qnty'])
       end
 
-      unless item_data['mural_dimensions'].nil?
-        product.set_property('mural dimensions', item_data['mural_dimensions'])
+      unless item_data['mural_width'].nil?
+        product.set_property('mural width', item_data['mural_width'])
       end
+
+      unless item_data['mural_height'].nil?
+        product.set_property('mural height', item_data['mural_height'])
+      end
+
+      unless item_data['panel_count'].nil?
+        product.set_property('panel count', item_data['panel_count'])
+      else
+        # If we have a mural width without an explicit panel count, calculate it
+        unless item_data['mural_width'].nil?
+          product.set_property('panel count', (item_data['mural_width'].to_f / MURAL_PANEL_WIDTH_DEFAULT).ceil)
+        end
+      end
+
+      unless item_data['printtoorder'].nil?
+        product.set_property('print-to-order', 'Yes')
+      end
+
     end
 
     # Assign "Ordering Information" items.
