@@ -3,9 +3,9 @@ module Spree::Admin
 
     before_action :load_product_import, except: [:create, :update]
 
-    def index
-      @product_import_image_locations = Spree::ProductImportImageLocation.where(product_import_id: params[:product_import_id])
-    end
+    # def index
+    #   @product_import_image_locations = Spree::ProductImportImageLocation.where(product_import_id: params[:product_import_id])
+    # end
 
     private
 
