@@ -1,27 +1,32 @@
 <% unless @product_import.state == Spree::ProductImport::STATE_COMPLETE %>
   <% content_for :page_actions do %>
-    <%= button_link_to(Spree.t(:new) + ' ' + Spree.t(:image_location), new_admin_product_import_product_import_image_location_url(@product_import), { class: "btn-success", icon: 'add', id: 'new_hero_carousel_item_link' }) if can? :create, Spree::HeroCarouselItem %>
+    <%= button_link_to(Spree.t(:new) + ' ' + Spree.t(:image_location), new_admin_product_import_product_import_image_location_url(@product_import), { class: "btn-success", icon: 'add', id: 'new_product_import_image_location_link' }) if can? :create, Spree::HeroCarouselItem %>
   <% end %>
 <% end %>
 
 <%= render partial: 'spree/admin/shared/product_import_tabs', locals: {current: :product_import_image_locations} %>
 
-<% if @product_import_image_locations.any? %>
-  <div id="product-import-image-locations-data-wrapper">
-    <table class="table" id='product_import_image_locations_data' data-hook>
+<% if @product_import.product_import_image_locations.any? %>
+    <table class="table sortable" data-hook="product_import_image_locations_table" data-sortable-link="<%= update_positions_admin_product_import_product_import_image_locations_url %>">
       <thead>
-      <th class="id"><%= Spree.t(:id) %></th>
-      <th class="path"><%= Spree.t(:path) %></th>
-      <th class="filename_pattern"><%= Spree.t(:filename_pattern) %></th>
-      <th class="actions"></th>
+        <th class="move-handle"></th>
+        <th class="id"><%= Spree.t(:id) %></th>
+        <th class="path"><%= Spree.t(:path) %></th>
+        <th class="filename_pattern"><%= Spree.t(:filename_pattern) %></th>
+        <th class="actions"></th>
       </thead>
 
       <tbody>
-        <% @product_import_image_locations.each do |location| %>
-          <tr data-product-import-id="<%= location['id'] %>">
-            <td class="id"><%= location['id'] %></td>
-            <td class="path"><%= location['path'] %></td>
-            <td class="filename_pattern"><%= location['filename_pattern'] %></td>
+        <% @product_import.product_import_image_locations.each do |location| %>
+          <tr id="<%= spree_dom_id location %>" data-hook="product_import_image_locations_row">
+            <td class="move-handle text-center">
+              <% if can? :edit, location && @product_import.state != Spree::ProductImport::STATE_COMPLETE %>
+                  <span class="icon icon-move handle"></span>
+              <% end %>
+            </td>
+            <td class="id"><%= location.id %></td>
+            <td class="path"><%= location.path %></td>
+            <td class="filename_pattern"><%= location.filename_pattern %></td>
             <td class="actions">
               <% unless @product_import.state == Spree::ProductImport::STATE_COMPLETE %>
                 <%= link_to_edit_url(edit_admin_product_import_product_import_image_location_url(@product_import, location), { :no_text => true }) %>
@@ -32,7 +37,6 @@
         <% end %>
       </tbody>
     </table>
-  </div>
 <% else %>
   <div class="alert alert-info no-objects-found">
     <%= Spree.t(:no_resource_found, resource: plural_resource_name(Spree::ProductImportImageLocation)) %>,

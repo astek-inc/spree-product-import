@@ -10,8 +10,7 @@ module Spree::Admin
     private
 
     def permitted_resource_params
-      params.require(:product_import_image_location).
-          permit(:id, :product_import_id, :path, :filename_pattern)
+      params.require(:product_import_image_location).permit(:id, :product_import_id, :path, :filename_pattern, :position)
     end
 
     def location_after_save

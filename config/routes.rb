@@ -3,7 +3,11 @@ Spree::Core::Engine.routes.draw do
     resources :product_imports do
 
       resources :product_import_items
-      resources :product_import_image_locations
+      resources :product_import_image_locations do
+        collection do
+          post :update_positions
+        end
+      end
 
       # post :import, on: :member
       # TODO implement export functionality
@@ -12,5 +16,6 @@ Spree::Core::Engine.routes.draw do
 
     resources :product_import_image_servers
   end
+
   get 'admin/product_imports/:id/import' => 'admin/product_imports#import'
 end
