@@ -18,7 +18,7 @@ module Spree::Admin
     before_action :set_import_state_labels, only: [:index]
     before_action :destroy_products, only: [:destroy]
     before_action :get_product_import_image_servers, only: [:new, :edit]
-    after_action :create_items, only: [:create]
+    after_action :create_items, only: [:create, :update]
 
     def index
       respond_with(@collection)
@@ -105,24 +105,16 @@ module Spree::Admin
       @product_import_image_servers = Spree::ProductImportImageServer.all
     end
 
-    # Create product import items for each row of the csv file
+    # Create product import items for each row of the csv file. Delete any existing items first.
     def create_items
+      Spree::ProductImportItem.delete_all(product_import_id: @product_import.id)
       set_csv
       @csv.each do |csv_item|
-
         # We get an error trying to convert accented characters if we don't do this
         csv_item.each do |k, v|
           csv_item[k] = v.force_encoding('UTF-8') unless v.nil?
         end
-
-        Spree::ProductImportItem.create!(
-          {
-            product_import_id: @product_import.id,
-            sku: csv_item[:sku],
-            json: csv_item.to_json
-          }
-        )
-
+        Spree::ProductImportItem.create!({ product_import_id: @product_import.id, sku: csv_item[:sku], json: csv_item.to_json })
       end
     end
 
