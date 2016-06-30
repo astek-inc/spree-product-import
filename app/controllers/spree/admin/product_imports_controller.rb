@@ -322,9 +322,9 @@ module Spree::Admin
         product.set_property('repeat height', 'None')
       end
 
-      # unless item_data['repeat_width'].nil? || item_data['repeat_width'].to_f.zero?
-      #   product.set_property('repeat width', item_data['repeat_width'])
-      # end
+      unless item_data['repeat_width'].nil? || item_data['repeat_width'].to_f.zero?
+        product.set_property('repeat width', item_data['repeat_width'])
+      end
 
       unless item_data['match_type'].nil?
         product.set_property('repeat match type', item_data['match_type'])
