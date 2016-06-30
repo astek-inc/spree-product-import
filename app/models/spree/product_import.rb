@@ -7,7 +7,7 @@ module Spree
     # attr_reader :products
     attr_accessor :state_label
 
-    has_one :product_import_image_server
+    belongs_to :product_import_image_server
 
     has_many :product_import_items, :dependent => :destroy
     has_many :product_import_image_locations, :dependent => :destroy
