@@ -386,6 +386,11 @@ module Spree::Admin
             product.order_info_items << Spree::OrderInfoItem.where(name: 'Double roll').take
           end
       end
+
+      unless item_data['printtoorder'].nil?
+        product.order_info_items << Spree::OrderInfoItem.find_by({ name: 'Unprinted margins' })
+        product.order_info_items << Spree::OrderInfoItem.find_by({ name: 'Customization available' })
+      end
     end
 
     # Get associated product images and attach to product.
