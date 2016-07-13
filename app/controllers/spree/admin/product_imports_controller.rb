@@ -501,6 +501,9 @@ module Spree::Admin
       unless replacements.nil?
         replacements.split(';').each do |pair|
           find, replace = pair.split(',')
+          if pair.start_with? ','
+            raise 'String to find in SKU cannot be empty'
+          end
           sku = sku.sub(find, replace)
         end
       end
