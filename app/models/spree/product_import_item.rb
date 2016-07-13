@@ -378,6 +378,9 @@ module Spree
       unless replacements.nil?
         replacements.split(';').each do |pair|
           find, replace = pair.split(',', -1) # Enables replacement of a string with an empty string
+          if pair.start_with? ','
+            raise 'String to find in SKU cannot be empty'
+          end
           sku = sku.sub(find, replace)
         end
       end
