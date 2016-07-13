@@ -14,30 +14,29 @@ module Spree
     PUBLISH_STATE_PUBLISHED = 'published'
 
     SAMPLE_VARIANT_PRICE = 5.99
-
     MURAL_PANEL_WIDTH_DEFAULT = 52
 
     belongs_to :product_import
     belongs_to :product
 
-    attr_accessor :state_label, :data, :image_server
+    attr_accessor :state_label
 
     def create_product
       begin
         @item_data = JSON.parse(self.json)
         @product = Spree::Product.create!({
           sku: self.sku,
-          name: item_data['item_name'],
-          available_on: item_data['publish_status'].to_i == 1 ? Time.now : nil,
+          name: @item_data['item_name'],
+          available_on: @item_data['publish_status'].to_i == 1 ? Time.now : nil,
           expires_on: expires_on,
-          description: item_data['brief_description'],
-          price: item_data['price'],
+          description: @item_data['brief_description'],
+          price: @item_data['price'],
           tax_category: Spree::TaxCategory.find_by_name('Taxable'),
           shipping_category: Spree::ShippingCategory.first,
-          weight: item_data['weight'],
-          height: item_data['pkg_height'],
-          width: item_data['pkg_width'],
-          depth: item_data['pkg_length'],
+          weight: @item_data['weight'],
+          height: @item_data['pkg_height'],
+          width: @item_data['pkg_width'],
+          depth: @item_data['pkg_length'],
           sale_unit: set_sale_unit
         })
 
@@ -49,18 +48,19 @@ module Spree
         assign_order_information
         process_images
 
-        self.product_id = product.id
+        self.product_id = @product.id
         self.state = Spree::ProductImportItem::STATE_IMPORTED
         self.state_message = nil
         self.imported_at = DateTime.now
-        self.publish_state = product.available_on.nil? ? PUBLISH_STATE_PENDING : PUBLISH_STATE_PUBLISHED
+        self.publish_state = @product.available_on.nil? ? PUBLISH_STATE_PENDING : PUBLISH_STATE_PUBLISHED
         self.save!
 
       rescue => e
 
-        puts ['PRODUCT IMPORT ERROR', 'Import ID: ' + self.import.id.to_s,  'SKU: ' + self.sku, e.to_s].join("\t")
+        puts ['PRODUCT IMPORT ERROR', 'Import ID: ' + self.product_import.id.to_s,  'SKU: ' + self.sku, e.to_s].join("\t")
 
-        product.destroy unless product.nil?
+        @product.destroy unless @product.nil?
+
         self.product_id = nil
         self.state = STATE_ERROR
         self.state_message = e.to_s
@@ -266,7 +266,6 @@ module Spree
 
     # Assign items for "Ordering Information" box on product page
     def assign_order_information
-
       @product.order_info_items << Spree::OrderInfoItem.where(name: 'Please confirm availability -- 3-8 week lead time').take
 
       case @item_data['type']
@@ -286,8 +285,8 @@ module Spree
 
     # Get associated product images and attach to product
     def process_images
-      product_import_image_server = Spree::ProductImportImageServer.find(self.import.product_import_image_server_id)
-      case product_import_image_server.protocol
+      @image_server = Spree::ProductImportImageServer.find(self.product_import.product_import_image_server_id)
+      case @image_server.protocol
         when 'ftp'
           images_by_ftp
         when 'http'
@@ -299,14 +298,12 @@ module Spree
 
     # Get images from an FTP server
     def images_by_ftp
-      image_server = Spree::ProductImportImageServer.find(self.import.product_import_image_server_id)
-
-      ftp = Net::FTP.new(image_server.url)
+      ftp = Net::FTP.new(@image_server.url)
       ftp.passive = true
-      ftp.login image_server.username, image_server.password
+      ftp.login @image_server.username, @image_server.password
 
       image_count = 0
-      self.import.product_import_image_locations.each do |location|
+      self.product_import.product_import_image_locations.each do |location|
         begin
           ftp.chdir(location.path)
           filename = filename_from_sku @product.sku, location.filename_pattern
@@ -329,7 +326,7 @@ module Spree
           # Spree::Image.create attachment: img, viewable: @product.master
 
         rescue => e
-          puts([Time.now.to_s, 'IMAGE CREATION ERROR', 'Import ID: ' + self.import.id.to_s, 'SKU: ' + @product.sku, e.to_s].join("\t"))
+          puts([Time.now.to_s, 'IMAGE CREATION ERROR', 'Import ID: ' + self.product_import.id.to_s, 'SKU: ' + @product.sku, e.to_s].join("\t"))
           # Do nothing here -- not all products have every type of image.
           next
         end
@@ -343,12 +340,11 @@ module Spree
 
     # Get images from a web server
     def images_by_http
-      image_server = Spree::ProductImportImageServer.find(self.import.product_import_image_server_id)
       image_count = 0
-      self.import.product_import_image_locations.each do |location|
+      self.product_import.product_import_image_locations.each do |location|
         begin
           filename = filename_from_sku @product.sku, location.filename_pattern
-          image_url = image_server.url + '/' + location.path + '/' + filename
+          image_url = @image_server.url + '/' + location.path + '/' + filename
 
           img = open(URI.encode(image_url))
           status = img.status[0]
@@ -358,7 +354,7 @@ module Spree
             image_count += 1
           end
         rescue => e
-          puts([Time.now.to_s, 'IMAGE CREATION ERROR', 'Import ID: ' + self.import.id.to_s, 'SKU: ' + @product.sku, e.to_s].join("\t"))
+          puts([Time.now.to_s, 'IMAGE CREATION ERROR', 'Import ID: ' + self.product_import.id.to_s, 'SKU: ' + @product.sku, e.to_s].join("\t"))
           # Do nothing here -- not all @products have every type of image.
           next
         end
