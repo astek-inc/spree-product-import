@@ -37,7 +37,8 @@ module Spree
           height: @item_data['pkg_height'],
           width: @item_data['pkg_width'],
           depth: @item_data['pkg_length'],
-          sale_unit: set_sale_unit
+          sale_unit: set_sale_unit,
+          country_of_origin: country_of_origin
         })
 
         generate_slug
@@ -56,7 +57,6 @@ module Spree
         self.save!
 
       rescue => e
-
         puts ['PRODUCT IMPORT ERROR', 'Import ID: ' + self.product_import.id.to_s,  'SKU: ' + self.sku, e.to_s].join("\t")
 
         @product.destroy unless @product.nil?
@@ -280,6 +280,35 @@ module Spree
       unless @item_data['printtoorder'].nil?
         @product.order_info_items << Spree::OrderInfoItem.find_by({ name: 'Unprinted margins' })
         @product.order_info_items << Spree::OrderInfoItem.find_by({ name: 'Customization available' })
+      end
+    end
+
+    # Try to find the country by ISO code, then by name
+    def country_of_origin
+      value = country_from_spreadsheet_value
+      begin
+        country = Spree::Country.find_by(iso: value)
+        if country.nil?
+          country = Spree::Country.find_by(name: value)
+        end
+        country.id
+      rescue => e
+        raise "Cannot find country by \"#{value}\": #{e}"
+      end
+    end
+
+    # Country of origin is not always present, and does not always use standard ISO code, or
+    # name as it appears in our system
+    def country_from_spreadsheet_value
+      case @item_data['country_of_origin']
+        when 'South Korea'
+          'KR'
+        when 'UK'
+          'GB'
+        when 'USA', nil
+          'US'
+        else
+          @item_data['country_of_origin']
       end
     end
 
