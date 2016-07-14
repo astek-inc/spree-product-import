@@ -283,12 +283,32 @@ module Spree
       end
     end
 
+    # Try to find the country by ISO code, then by name
     def country_of_origin
-      iso = @item_data['country_of_origin'].nil? ? 'US' : @item_data['country_of_origin']
+      value = country_from_spreadsheet_value
       begin
-        Spree::Country.find_by(iso: iso).id
+        country = Spree::Country.find_by(iso: value)
+        if country.nil?
+          country = Spree::Country.find_by(name: value)
+        end
+        country.id
       rescue => e
-        raise "Cannot find country by code #{iso}: #{e}"
+        raise "Cannot find country by \"#{value}\": #{e}"
+      end
+    end
+
+    # Country of origin is not always present, and does not always use standard ISO code, or
+    # name as it appears in our system
+    def country_from_spreadsheet_value
+      case @item_data['country_of_origin']
+        when 'South Korea'
+          'KR'
+        when 'UK'
+          'GB'
+        when 'USA', nil
+          'US'
+        else
+          @item_data['country_of_origin']
       end
     end
 
