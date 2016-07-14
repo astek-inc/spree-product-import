@@ -8,12 +8,6 @@ module Spree::Admin
     require 'open-uri'
     require 'json'
     require 'net/ftp'
-    
-    # SAMPLE_VARIANT_PRICE = 5.99
-    #
-    # MURAL_PANEL_WIDTH_DEFAULT = 52
-
-    # LOG_FILE = Rails.root + 'log/product_import.log'
 
     before_action :set_import_state_labels, only: [:index]
     before_action :destroy_products, only: [:destroy]
@@ -25,8 +19,6 @@ module Spree::Admin
     end
 
     def import
-      # @log = File.open(LOG_FILE, 'a')
-
       response.headers['Content-Type'] = 'text/event-stream'
       Spree::ProductImportItem.where(product_import_id: @product_import.id, state: [Spree::ProductImportItem::STATE_PENDING, Spree::ProductImportItem::STATE_ERROR]).each do |item|
         item = item.create_product

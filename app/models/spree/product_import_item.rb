@@ -37,7 +37,8 @@ module Spree
           height: @item_data['pkg_height'],
           width: @item_data['pkg_width'],
           depth: @item_data['pkg_length'],
-          sale_unit: set_sale_unit
+          sale_unit: set_sale_unit,
+          country_of_origin: country_of_origin
         })
 
         generate_slug
@@ -56,7 +57,6 @@ module Spree
         self.save!
 
       rescue => e
-
         puts ['PRODUCT IMPORT ERROR', 'Import ID: ' + self.product_import.id.to_s,  'SKU: ' + self.sku, e.to_s].join("\t")
 
         @product.destroy unless @product.nil?
@@ -280,6 +280,15 @@ module Spree
       unless @item_data['printtoorder'].nil?
         @product.order_info_items << Spree::OrderInfoItem.find_by({ name: 'Unprinted margins' })
         @product.order_info_items << Spree::OrderInfoItem.find_by({ name: 'Customization available' })
+      end
+    end
+
+    def country_of_origin
+      iso = @item_data['country_of_origin'].nil? ? 'US' : @item_data['country_of_origin']
+      begin
+        Spree::Country.find_by(iso: iso).id
+      rescue => e
+        raise "Cannot find country by code #{iso}: #{e}"
       end
     end
 
