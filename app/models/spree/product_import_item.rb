@@ -282,7 +282,7 @@ module Spree
         @product.order_info_items << Spree::OrderInfoItem.find_by({ name: 'Customization available' })
       end
     end
-
+    
     # Try to find the country by ISO code, then by name
     def country_of_origin
       value = country_from_spreadsheet_value
