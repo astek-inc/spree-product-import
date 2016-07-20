@@ -51,7 +51,7 @@ class PopulateSpreeProductsCountryOfOriginFromImportData < ActiveRecord::Migrati
         'KR'
       when 'UK'
         'GB'
-      when 'USA', 'the USA', nil
+      when 'USA', 'the USA', 'USa', nil
         'US'
       else
         value
