@@ -373,8 +373,8 @@ module Spree
       self.product_import.product_import_image_locations.each do |location|
         begin
           filename = filename_from_sku @product.sku, location.filename_pattern
-          image_url = @image_server.url + '/' + location.path.sub!(/^\//, '').sub!(/\/$/, '') + '/' + filename
 
+          image_url = @image_server.url + '/' + location.path.sub(/^\//, '').sub(/\/$/, '') + '/' + filename
           img = open(URI.encode(image_url))
           status = img.status[0]
 
