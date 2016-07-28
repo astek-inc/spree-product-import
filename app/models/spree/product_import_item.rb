@@ -335,8 +335,7 @@ module Spree
       self.product_import.product_import_image_locations.each do |location|
         begin
           ftp.chdir(location.path)
-          filename = filename_from_sku @product.sku, location.filename_pattern
-
+          filename = SpreeProductImports::Image.filename_from_sku @product.sku, location.filename_pattern
           img_data = ftp.getbinaryfile(filename, nil)
           unless img_data.nil?
             img = File.new(filename, 'wb')
@@ -355,7 +354,9 @@ module Spree
           # Spree::Image.create attachment: img, viewable: @product.master
 
         rescue => e
+          puts '='*80
           puts([Time.now.to_s, 'IMAGE CREATION ERROR', 'Import ID: ' + self.product_import.id.to_s, 'SKU: ' + @product.sku, e.to_s].join("\t"))
+          puts '='*80
           # Do nothing here -- not all products have every type of image.
           next
         end
@@ -372,19 +373,19 @@ module Spree
       image_count = 0
       self.product_import.product_import_image_locations.each do |location|
         begin
-          filename = filename_from_sku @product.sku, location.filename_pattern
-
+          filename = SpreeProductImports::Image.filename_from_sku @product.sku, location.filename_pattern
           image_url = @image_server.url + '/' + location.path.sub(/^\//, '').sub(/\/$/, '') + '/' + filename
           img = open(URI.encode(image_url))
           status = img.status[0]
-
           if status.to_i == 200
             Spree::Image.create attachment: img, viewable: @product.master
             image_count += 1
           end
         rescue => e
+          puts '='*80
           puts([Time.now.to_s, 'IMAGE CREATION ERROR', 'Import ID: ' + self.product_import.id.to_s, 'SKU: ' + @product.sku, e.to_s].join("\t"))
-          # Do nothing here -- not all @products have every type of image.
+          puts '='*80
+          # Do nothing here -- not all products have every type of image.
           next
         end
       end
@@ -393,24 +394,6 @@ module Spree
       unless image_count > 0
         raise 'No images created'
       end
-    end
-
-    # Use pattern to generate filename from SKU.
-    def filename_from_sku(sku, filename_pattern)
-      re = /^<SKU( replace="([^"]*)")?>/
-      replacements = re.match(filename_pattern)[2]
-
-      unless replacements.nil?
-        replacements.split(';').each do |pair|
-          if pair.start_with? ','
-            raise 'String to find in SKU cannot be empty'
-          end
-          find, replace = pair.split(',', -1) # Enables replacement of a string with an empty string (remove characters from SKU)
-          sku = sku.sub(find, replace)
-        end
-      end
-
-      filename_pattern.sub(re, sku)
     end
   end
 
