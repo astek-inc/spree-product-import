@@ -46,7 +46,7 @@ module Spree
         assign_categories
         assign_branding
         assign_properties
-        assign_order_information
+        SpreeProductImports::OrderingInformation.assign @product, @item_data
         process_images
 
         self.product_id = @product.id
@@ -262,25 +262,6 @@ module Spree
         @product.set_property('print-to-order', 'Yes')
       end
 
-    end
-
-    # Assign items for "Ordering Information" box on product page
-    def assign_order_information
-      @product.order_info_items << Spree::OrderInfoItem.where(name: 'Please confirm availability -- 3-8 week lead time').take
-
-      case @item_data['type']
-        when 'Wallpaper'
-          @product.order_info_items << Spree::OrderInfoItem.where(name: 'Colors may vary - please order sample').take
-
-          if @item_data['default_qnty'].to_i == 2
-            @product.order_info_items << Spree::OrderInfoItem.where(name: 'Double roll').take
-          end
-      end
-
-      unless @item_data['printtoorder'].nil?
-        @product.order_info_items << Spree::OrderInfoItem.find_by({ name: 'Unprinted margins' })
-        @product.order_info_items << Spree::OrderInfoItem.find_by({ name: 'Customization available' })
-      end
     end
 
     # Try to find the country by ISO code, then by name
