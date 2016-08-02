@@ -46,7 +46,7 @@ module Spree
         assign_categories
         assign_branding
         assign_properties
-        assign_order_information
+        SpreeProductImports::OrderingInformation.assign @product, @item_data
         process_images
 
         self.product_id = @product.id
@@ -264,25 +264,6 @@ module Spree
 
     end
 
-    # Assign items for "Ordering Information" box on product page
-    def assign_order_information
-      @product.order_info_items << Spree::OrderInfoItem.where(name: 'Please confirm availability -- 3-8 week lead time').take
-
-      case @item_data['type']
-        when 'Wallpaper'
-          @product.order_info_items << Spree::OrderInfoItem.where(name: 'Colors may vary - please order sample').take
-
-          if @item_data['default_qnty'].to_i == 2
-            @product.order_info_items << Spree::OrderInfoItem.where(name: 'Double roll').take
-          end
-      end
-
-      unless @item_data['printtoorder'].nil?
-        @product.order_info_items << Spree::OrderInfoItem.find_by({ name: 'Unprinted margins' })
-        @product.order_info_items << Spree::OrderInfoItem.find_by({ name: 'Customization available' })
-      end
-    end
-
     # Try to find the country by ISO code, then by name
     def country_of_origin
       value = country_from_spreadsheet_value
@@ -335,8 +316,7 @@ module Spree
       self.product_import.product_import_image_locations.each do |location|
         begin
           ftp.chdir(location.path)
-          filename = filename_from_sku @product.sku, location.filename_pattern
-
+          filename = SpreeProductImports::Image.filename_from_sku @product.sku, location.filename_pattern
           img_data = ftp.getbinaryfile(filename, nil)
           unless img_data.nil?
             img = File.new(filename, 'wb')
@@ -355,7 +335,9 @@ module Spree
           # Spree::Image.create attachment: img, viewable: @product.master
 
         rescue => e
+          puts '='*80
           puts([Time.now.to_s, 'IMAGE CREATION ERROR', 'Import ID: ' + self.product_import.id.to_s, 'SKU: ' + @product.sku, e.to_s].join("\t"))
+          puts '='*80
           # Do nothing here -- not all products have every type of image.
           next
         end
@@ -372,19 +354,19 @@ module Spree
       image_count = 0
       self.product_import.product_import_image_locations.each do |location|
         begin
-          filename = filename_from_sku @product.sku, location.filename_pattern
-          image_url = @image_server.url + '/' + location.path + '/' + filename
-
+          filename = SpreeProductImports::Image.filename_from_sku @product.sku, location.filename_pattern
+          image_url = @image_server.url + '/' + location.path.sub(/^\//, '').sub(/\/$/, '') + '/' + filename
           img = open(URI.encode(image_url))
           status = img.status[0]
-
           if status.to_i == 200
             Spree::Image.create attachment: img, viewable: @product.master
             image_count += 1
           end
         rescue => e
+          puts '='*80
           puts([Time.now.to_s, 'IMAGE CREATION ERROR', 'Import ID: ' + self.product_import.id.to_s, 'SKU: ' + @product.sku, e.to_s].join("\t"))
-          # Do nothing here -- not all @products have every type of image.
+          puts '='*80
+          # Do nothing here -- not all products have every type of image.
           next
         end
       end
@@ -393,24 +375,6 @@ module Spree
       unless image_count > 0
         raise 'No images created'
       end
-    end
-
-    # Use pattern to generate filename from SKU.
-    def filename_from_sku(sku, filename_pattern)
-      re = /^<SKU( replace="([^"]*)")?>/
-      replacements = re.match(filename_pattern)[2]
-
-      unless replacements.nil?
-        replacements.split(';').each do |pair|
-          if pair.start_with? ','
-            raise 'String to find in SKU cannot be empty'
-          end
-          find, replace = pair.split(',', -1) # Enables replacement of a string with an empty string (remove characters from SKU)
-          sku = sku.sub(find, replace)
-        end
-      end
-
-      filename_pattern.sub(re, sku)
     end
   end
 
