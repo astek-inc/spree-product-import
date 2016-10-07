@@ -29,7 +29,7 @@ module Spree
           name: @item_data['item_name'],
           available_on: @item_data['publish_status'].to_i == 1 ? Time.now : nil,
           expires_on: expires_on,
-          description: @item_data['brief_description'],
+          description: @item_data['brief_description'] != 'EMPTY' ? @item_data['brief_description'] : nil,
           price: @item_data['price'],
           tax_category: Spree::TaxCategory.find_by_name('Taxable'),
           shipping_category: Spree::ShippingCategory.first,
@@ -43,8 +43,8 @@ module Spree
 
         generate_slug
         create_sample_options
-        assign_categories
-        assign_branding
+        SpreeProductImports::Categories.assign @product, @item_data
+        SpreeProductImports::Branding.assign @product, @item_data
         assign_properties
         SpreeProductImports::OrderingInformation.assign @product, @item_data
         process_images
@@ -126,66 +126,6 @@ module Spree
 
     def generate_slug
       @product.slug = @product.name.parameterize + '-pr-' + @product.id.to_s
-      @product.save!
-    end
-
-    def assign_categories
-      categories_taxonomy = Spree::Taxonomy.find_by(name: 'Categories')
-      categories_base = Spree::Taxon.find_by_name('Categories')
-
-      # Find category taxon by name. If it doesn't exist, create it.
-      # Append it to the item's taxons.
-      taxon_name = get_category_taxon_name(@item_data['type'])
-      taxon = Spree::Taxon.where(name: taxon_name, taxonomy_id: categories_base.taxonomy_id).first_or_create!
-      categories_base.children << taxon
-      @product.taxons << taxon
-
-      # # Now get the secondary category taxon (if one is provided), or create it if it doesn't exist
-      # if @item_data['secondary_category'].present? && !@item_data['secondary_category'].nil?
-      #   child_taxon = Spree::Taxon.where(name: @item_data['secondary_category'], parent: taxon, taxonomy: categories_taxonomy).first_or_create!
-      #   taxon.children << child_taxon
-      #   @product.taxons << child_taxon
-      # end
-
-      @product.save!
-    end
-
-    # Get the taxon name corresponding to the value in the "type"
-    # column of the spreadsheet.
-    def get_category_taxon_name(type)
-      case type
-        when 'Wallcovering'
-          taxon_name = 'Wall Coverings'
-        when 'Naturals Fiber Wallcovering'
-          taxon_name = 'Grasscloth and Naturals'
-        when 'Mural'
-          taxon_name = 'Wall Murals'
-        when 'Border'
-          taxon_name = 'Borders'
-        when 'Decal'
-          taxon_name = 'Wall Decals'
-        else
-          taxon_name = type
-      end
-
-      taxon_name
-    end
-
-    def assign_branding
-      # First, get base brand taxon.
-      categories_taxonomy = Spree::Taxonomy.find_or_create_by(name: 'Categories')
-      brands_base = Spree::Taxon.where(name: 'Brands', taxonomy: categories_taxonomy).first_or_create
-
-      # Find brand taxon by name, or create it. Append it to the item's taxons.
-      taxon = Spree::Taxon.where(name: @item_data['brand'], taxonomy: categories_taxonomy).first_or_create
-      brands_base.children << taxon
-      @product.taxons << taxon
-
-      # Now get the secondary brand (collection) under the main brand, or create it if it doesn't exist
-      child_taxon = Spree::Taxon.where(name: @item_data['main_category'], parent: taxon, taxonomy: categories_taxonomy).first_or_create
-      taxon.children << child_taxon
-      @product.taxons << child_taxon
-
       @product.save!
     end
 
