@@ -9,13 +9,13 @@ Spree::Core::Engine.routes.draw do
         end
       end
 
-      # post :import, on: :member
-      # TODO implement export functionality
-      # post :export, on: :member
+      member do
+        get 'import'
+        get 'delete_import'
+      end
+
     end
 
     resources :product_import_image_servers
   end
-
-  get 'admin/product_imports/:id/import' => 'admin/product_imports#import'
 end
