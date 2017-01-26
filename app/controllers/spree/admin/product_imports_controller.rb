@@ -41,6 +41,33 @@ module Spree::Admin
         response.stream.close
     end
 
+    def delete_import
+
+      id = params[:id]
+
+      begin
+        status = 'OK'
+        message = ''
+        unless Spree::ProductImport.destroy(id)
+          status = 'NO'
+          message = "Unable to destroy product import id #{id}"
+        end
+      rescue => e
+        status = 'NO'
+        message = e.message
+      end
+
+      data = { status: status, message: message, import_id: id }.to_json
+      response.headers['Content-Type'] = 'text/event-stream'
+      response.stream.write 'event: update'+$/
+      response.stream.write 'data: '+data+$/+$/
+
+    rescue IOError
+      # client disconnected.
+    ensure
+      response.stream.close
+    end
+
     protected
 
     def permitted_resource_params

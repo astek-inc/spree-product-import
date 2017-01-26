@@ -6,6 +6,8 @@
     <%= button_link_to Spree.t(:new) + ' ' + Spree.t(:product_import), new_object_url, { :class => "btn-success", :icon => 'add', 'data-update' => 'new_product_import', :id => 'new_product_import_link' } %>
 <% end %>
 
+<div id="status"></div>
+
 <%= render partial: 'spree/admin/shared/index_table_options', locals: { collection: @collection } %>
 
 <% if @collection.any? %>
@@ -28,12 +30,8 @@
             <td class="created_at"><%= import.created_at.to_date %></td>
             <td class="completed_at"><%= import.completed_at.to_date unless import.completed_at.nil? %></td>
             <td class="actions actions-2 text-right">
-              <%#= link_to 'Show', [:admin, import] %>
-              <%#= link_to_with_icon('eye-open', nil, admin_product_import_url(import), {:name => 'View', :no_text => true, :class => 'btn btn-primary btn-sm'}) %>
-              <%# if import.state == 'pending' %>
-                <%= link_to_edit(import, :no_text => true) %>
-              <%# end %>
-              <%= link_to_delete(import, :no_text => true) %>
+              <%= link_to_edit(import, :no_text => true) %>
+              <%= link_to_with_icon('delete', nil, delete_import_admin_product_import_path(import), { title: 'Delete', no_test: true, class: 'btn btn-danger btn-sm btn-delete-import', id: "delete-import-#{import.id}" }) %>
             </td>
           </tr>
         <% end %>

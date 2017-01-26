@@ -1,3 +1,44 @@
+var DYW = DYW || {
+
+    status_success: 'OK',
+
+    delete_import: function(href, id) {
+        if (!confirm('Are you sure?')) {
+            $('#'+id).blur();
+            return;
+        }
+
+        window.scrollTo(0, 0);
+        $('#status').html('<div class="alert alert-info alert-progress"><div class="spinner">Please wait...</div><div class="progress-message">Please wait...</div></div>');
+
+        var source = new EventSource(href);
+        source.addEventListener('update', function(e){
+
+            response = JSON.parse(e.data);
+            if (response.status == DYW.status_success) {
+                $('#'+id).closest('tr').remove();
+                $('#status').html('<div class="alert alert-success">The import and product data has been deleted.</div>');
+                window.setTimeout('$("#status div").hide("slow")', 3000);
+            } else {
+                $('#status').html('<div class="alert alert-warning">An error occurred: '+response.message+'</div>');
+            }
+
+            source.close();
+            $('#'+id).blur();
+
+        });
+    },
+
+};
+
+$(function(){
+    $('.btn-delete-import').click(function(event){
+        event.preventDefault();
+        DYW.delete_import(this.href, this.id);
+    });
+});
+
+
 function labelClassForState(state) {
     switch (state) {
         case 'pending':
