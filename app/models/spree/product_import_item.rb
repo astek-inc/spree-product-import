@@ -17,7 +17,7 @@ module Spree
     MURAL_PANEL_WIDTH_DEFAULT = 52
 
     belongs_to :product_import
-    belongs_to :product
+    belongs_to :product, dependent: :destroy
 
     attr_accessor :state_label
 
