@@ -38,7 +38,8 @@ module Spree
           width: @item_data['pkg_width'],
           depth: @item_data['pkg_length'],
           sale_unit: set_sale_unit,
-          country_of_origin: country_of_origin
+          country_of_origin: country_of_origin,
+          search_keywords: @item_data['key_search_words']
         })
 
         generate_slug
