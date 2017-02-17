@@ -22,41 +22,13 @@ module Spree
     mattr_accessor :brewster_ftp_username
     mattr_accessor :brewster_ftp_password
 
-    mattr_accessor :admin_product_imports_per_page
-
     default_scope { order(created_at: :desc) }
 
     self.whitelisted_ransackable_attributes =  %w[created_at]
 
-    # def initialize *args
-    #   super
-    #   @products ||= Array.new
+    # def self.setup
+    #   yield self
     # end
-    #
-    # def import
-    #   # @products = []
-    #   # # self.csv_file.get_rows do |row|
-    #   # #   @products << build_product(row)
-    #   # # end
-    #   # @products
-    #   self.id
-    # end
-
-    #
-    # # # TODO Export implementation is incomplete
-    # # def export(products)
-    # #   self.file.to_csv(products)
-    # # end
-    #
-    # private
-    #
-    # def build_product(attrs)
-    #   #Spree::Product.where(id: attrs[:id]).first_or_create(attrs)
-    # end
-
-    def self.setup
-      yield self
-    end
 
   end
 end
