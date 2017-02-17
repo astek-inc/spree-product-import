@@ -203,6 +203,10 @@ module Spree
         @product.set_property('print-to-order', 'Yes')
       end
 
+      unless @item_data['styles'].nil?
+        @product.set_property('style', @item_data['styles'])
+      end
+
     end
 
     # Try to find the country by ISO code, then by name
