@@ -89,7 +89,7 @@ module Spree::Admin
       @search = @collection.ransack(params[:q])
       @collection = @search.result.
           page(params[:page]).
-          per(params[:per_page] || Spree::ProductImport.admin_product_imports_per_page)
+          per(params[:per_page] || SpreeProductImports.configuration.admin_product_imports_per_page)
       @collection
     end
 
