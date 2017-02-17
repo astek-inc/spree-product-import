@@ -14,6 +14,12 @@ module SpreeProductImports
         inject_into_file 'vendor/assets/stylesheets/spree/backend/all.css', " *= require spree/backend/spree_product_imports\n", :before => /\*\//, :verbose => true
       end
 
+      desc "Creates an initializer in your application's config/initializers dir"
+      source_root File.expand_path('../../../templates', __FILE__)
+      def copy_initializer
+        template 'spree_product_imports.rb', 'config/initializers/spree_product_imports.rb'
+      end
+
       def add_migrations
         run 'bundle exec rake railties:install:migrations FROM=spree_product_imports'
       end
@@ -23,7 +29,7 @@ module SpreeProductImports
         if run_migrations
           run 'bundle exec rake db:migrate'
         else
-          puts 'Skipping rake db:migrate, don\'t forget to run it!'
+          puts "Skipping rake db:migrate, don't forget to run it!"
         end
       end
     end
