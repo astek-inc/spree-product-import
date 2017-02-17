@@ -39,7 +39,7 @@ module Spree
           depth: @item_data['pkg_length'],
           sale_unit: set_sale_unit,
           country_of_origin: country_of_origin,
-          search_keywords: @item_data['key_search_words']
+          search_keywords: @item_data['search_keywords']
         })
 
         generate_slug
@@ -203,8 +203,8 @@ module Spree
         @product.set_property('print-to-order', 'Yes')
       end
 
-      unless @item_data['styles'].nil?
-        @product.set_property('style', @item_data['styles'])
+      unless @item_data['style'].nil?
+        @product.set_property('style', @item_data['style'])
       end
 
     end
