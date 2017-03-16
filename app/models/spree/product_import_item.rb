@@ -121,7 +121,19 @@ module Spree
 
     def set_sale_unit
       unless @item_data['sold_by'].nil?
-        Spree::SaleUnit.find_or_create_by(name: @item_data['sold_by'])
+        Spree::SaleUnit.find_or_create_by(name: sale_unit_name)
+      end
+    end
+
+    # Attempt to handle variations in capitalization that cause new sale units to be created
+    def sale_unit_name
+      case @item_data['sold_by'].downcase
+        when 'single roll'
+          'Single roll'
+        when 'double roll'
+          'Double roll'
+        else
+          @item_data['sold_by']
       end
     end
 
