@@ -219,6 +219,10 @@ module Spree
         @product.set_property('style', @item_data['style'])
       end
 
+      unless @item_data['color'].nil?
+        @product.set_property('color', @item_data['color'])
+      end
+
     end
 
     # Try to find the country by ISO code, then by name
