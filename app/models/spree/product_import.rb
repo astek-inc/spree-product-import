@@ -23,6 +23,7 @@ module Spree
     mattr_accessor :brewster_ftp_password
 
     default_scope { order(created_at: :desc) }
+    scope :pending, -> { where(state: STATE_PENDING) }
 
     self.whitelisted_ransackable_attributes =  %w[created_at]
 
