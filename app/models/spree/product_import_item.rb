@@ -79,7 +79,11 @@ module Spree
       option_type = Spree::OptionType.where(name: 'item_or_sample', presentation: 'Product').first_or_create
       @product.option_types << option_type
       create_variant 'full'
-      create_variant 'sample'
+
+      # Borders do not have samples available
+      unless @item_data['type'] == 'Border'
+        create_variant('sample')
+      end
     end
 
     # Create sample or full variant.
