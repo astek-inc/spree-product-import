@@ -81,9 +81,15 @@ module Spree
       create_variant 'full'
 
       # Borders do not have samples available
-      unless @item_data['type'] == 'Border'
+      unless is_border?
         create_variant('sample')
       end
+    end
+
+    # "Border" can either be a primary or secondary category. We're using a regexp to allow for "Borders" as well.
+    def is_border?
+      regexp = /\ABorder/
+      regexp =~ @item_data['type'] || regexp =~ @item_data['secondary_category']
     end
 
     # Create sample or full variant.
