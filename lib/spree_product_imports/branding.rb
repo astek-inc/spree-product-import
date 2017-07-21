@@ -14,10 +14,17 @@ module SpreeProductImports
         product.taxons << taxon
 
         # Now get the secondary brand (collection) under the main brand, or create it if it doesn't exist
-        if item_data['collection'].present? && !item_data['collection'].nil?
+        if item_data['collection'].present?
           child_taxon = Spree::Taxon.find_or_create_by!(name: item_data['collection'], parent: taxon, taxonomy: categories_taxonomy)
           taxon.children << child_taxon
           product.taxons << child_taxon
+        end
+
+        # Now get the secondary brand (collection) under the main brand, or create it if it doesn't exist
+        if item_data['book_name'].present?
+          grandchild_taxon = Spree::Taxon.find_or_create_by!(name: item_data['book_name'], parent: child_taxon, taxonomy: categories_taxonomy)
+          child_taxon.children << grandchild_taxon
+          product.taxons << grandchild_taxon
         end
 
         product.save!
